@@ -1,0 +1,67 @@
+import Link from 'next/link';
+
+export default function LoginForm() {
+  return (
+    <div className="space-y-6">
+      <div className="text-center mb-8">
+        <h1 className="text-3xl font-bold text-gray-900"> Login </h1>
+        <p className="mt-2 text-gray-600">
+          Do not have an account? {' '}
+          <Link href="/singup" className="text-primary-600 hover:text-primary-700 font-medium">
+            Create your account
+          </Link>
+        </p>
+      </div>
+
+      <form className="space-y-6">
+        <div>
+          <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+            Email
+          </label>
+          <input
+            id="email"
+            type="email"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
+            placeholder="Enter your email"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+            Password
+          </label>
+          <input
+            id="password"
+            type="password"
+            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-600 focus:border-transparent"
+            placeholder="Enter your password"
+          />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <div className="flex items-center">
+            <input
+              id="remember-me"
+              type="checkbox"
+              className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+            />
+            <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+              Remember Me
+            </label>
+          </div>
+
+          <Link href="/forgot-password" className="text-sm text-primary-600 hover:text-primary-700">
+            Forgot password?
+          </Link>
+        </div>
+
+        <button
+          type="submit"
+          className="w-full bg-primary-600 text-white font-medium py-3 px-4 rounded-lg hover:bg-primary-700 transition duration-200"
+        >
+          LOGIN
+        </button>
+      </form>
+    </div>
+  );
+}
