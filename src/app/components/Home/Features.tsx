@@ -87,14 +87,6 @@ export default function Feature() {
             </div>
           ))}
         </div>
-
-        {/* Call to action
-        <div className="mt-16 text-center">
-          <button className="bg-gradient-to-r from-blue-600 to-blue-700 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg hover:shadow-xl">
-            Start Your Free Trial
-          </button>
-          <p className="mt-4 text-gray-600">No credit card required • 14-day free trial</p>
-        </div> */}
       </div>
     </section>
   );

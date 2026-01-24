@@ -10,9 +10,9 @@ import Footer from './components/Footer/page';
 export default function Home() {
   return (
     <div className="min-h-screen bg-gray-200  from-blue-50 to-white">
-      <Header />
+      <Header/>
       <Heros/> 
-      < ProgressTrackings />
+      <ProgressTrackings/>
       <Feature/>
       <Samples/>
       <Stores/>

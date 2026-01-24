@@ -25,7 +25,7 @@ export default function Heros(){
           {/* Right column - Illustration/image */}
           <div className="flex justify-center lg:justify-end">
             <div className="relative w-full max-w-md">
-              <div className="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl h-80 w-full shadow-xl">
+              <div className=" bg-blue-500  rounded-2xl h-80 w-full shadow-xl">
                 <Image
                   src="/images/hero.png"
                   alt="Student Progress Tracker"
@@ -36,14 +36,14 @@ export default function Heros(){
               </div>
               <div className="absolute -top-6 -left-6 bg-white p-6 rounded-2xl shadow-lg w-64">
                 <div className="text-sm text-gray-500">Daily Progress</div>
-                <div className="text-2xl font-bold mt-2">85% Complete</div>
+                <div className="text-2xl font-bold mt-2 text-green-600">85% Complete</div>
                 <div className="mt-4 h-3 w-full bg-gray-200 rounded-full overflow-hidden">
                   <div className="h-full bg-green-500 rounded-full" style={{ width: '85%' }}></div>
                 </div>
               </div>
               <div className="absolute -bottom-6 -right-6 bg-white p-6 rounded-2xl shadow-lg w-64">
                 <div className="text-sm text-gray-500">Current Streak</div>
-                <div className="text-2xl font-bold mt-2">14 Days</div>
+                <div className="text-2xl font-bold mt-2 text-green-600">14 Days</div>
                 <div className="mt-4 flex space-x-1">
                   {[...Array(7)].map((_, i) => (
                     <div key={i} className="h-10 w-8 rounded-md bg-green-400"></div>

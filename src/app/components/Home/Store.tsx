@@ -129,17 +129,17 @@ export default function Stories() {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.4 }}
-          className="text-center bg-gradient from-gray-800 to-gray-900 rounded-2xl p-12 text-white"
+          className="text-center bg-white from-gray-800 to-gray-900 rounded-2xl p-12 text-gray-900"
         >
           <h3 className="text-3xl font-bold mb-6">Ready to transform your study habits?</h3>
-          <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-blue-600 mb-8 max-w-2xl mx-auto">
             Join thousands of successful students who have improved their grades and study efficiency.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">
-            <button className="bg-white text-blue-600 font-semibold px-8 py-3 rounded-lg hover:bg-gray-100 transition shadow-lg">
+            <button className="bg-gray-200 text-blue-600 font-semibold px-8 py-3 rounded-lg hover:bg-gray-100 transition shadow-lg">
               Start Free Trial
             </button>
-            <button className="bg-transparent border-2 border-white text-white font-semibold px-8 py-3 rounded-lg hover:bg-white/10 transition">
+            <button className="bg-blue-700 border-2 border-white text-white font-semibold px-8 py-3 rounded-lg hover:bg-blue-800 transition shadow-lg">
               Book a Demo
             </button>
           </div>
