@@ -26,7 +26,7 @@ const Dashboard = () => {
 
   const navItems = [
     { name: 'Home', icon: HomeIcon},
-    { name: 'Classes', icon: BookOpenIcon},
+    { name: 'Classes',href:'' ,icon: BookOpenIcon},
     { name: 'Assignments', icon: ClipboardIcon },
     { name: 'Messages', icon: ChatBubbleLeftRightIcon },
     { name: 'Student', icon: UserCircleIcon },
