@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 
-const state = [
+const stats = [
   {
     value: 50000,
     suffix: '+',
@@ -61,17 +61,17 @@ const state = [
   }
 ];
 
+
 export default function ProgressTrackings() {
   const [animatedValues, setAnimatedValues] = useState<number[]>(
-    () => state.map(() => 0)
+    () => stats.map(() => 0)
   );
-
   useEffect(() => {
     const duration = 2000;
     const steps = 60;
     const interval = duration / steps;
 
-    const timers = state.map((stat, index) => {
+    const timers = stats.map((stat, index) => {
       let step = 0;
 
       return setInterval(() => {
@@ -108,7 +108,7 @@ export default function ProgressTrackings() {
         </div>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-          {state.map((stat, index) => (
+          {stats.map((stat, index) => (
             <div key={index} className="text-center">
               <div
                 className={`inline-flex items-center justify-center h-20 w-20 rounded-full ${stat.color} mb-4`}
