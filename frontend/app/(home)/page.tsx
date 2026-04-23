@@ -1,10 +1,13 @@
 'use client';
 
+import { Star, Users, BookOpen, Award, Globe } from 'lucide-react';
+import Footer from '@/components/Footer';
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-slate-50 to-slate-100 py-16">
+      <section className="bg-linear-to-br from-slate-50 to-slate-100 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
@@ -53,18 +56,38 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             <div className="p-6">
+              <div className="flex justify-center mb-4">
+                <div className="bg-blue-100 w-16 h-16 rounded-full flex items-center justify-center">
+                  <Users className="w-8 h-8 text-blue-600" />
+                </div>
+              </div>
               <div className="text-4xl font-bold text-blue-600 mb-2">50,000+</div>
               <p className="text-gray-600">Active Learners</p>
             </div>
             <div className="p-6">
+              <div className="flex justify-center mb-4">
+                <div className="bg-green-100 w-16 h-16 rounded-full flex items-center justify-center">
+                  <BookOpen className="w-8 h-8 text-green-600" />
+                </div>
+              </div>
               <div className="text-4xl font-bold text-green-600 mb-2">1,500+</div>
               <p className="text-gray-600">Online Classes</p>
             </div>
             <div className="p-6">
+              <div className="flex justify-center mb-4">
+                <div className="bg-purple-100 w-16 h-16 rounded-full flex items-center justify-center">
+                  <Award className="w-8 h-8 text-purple-600" />
+                </div>
+              </div>
               <div className="text-4xl font-bold text-purple-600 mb-2">500+</div>
               <p className="text-gray-600">Expert Instructors</p>
             </div>
             <div className="p-6">
+              <div className="flex justify-center mb-4">
+                <div className="bg-orange-100 w-16 h-16 rounded-full flex items-center justify-center">
+                  <Globe className="w-8 h-8 text-orange-600" />
+                </div>
+              </div>
               <div className="text-4xl font-bold text-orange-600 mb-2">100+</div>
               <p className="text-gray-600">Countries Reached</p>
             </div>
@@ -174,9 +197,9 @@ export default function Home() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* Testimonial 1 */}
             <div className="bg-white p-8 rounded-lg shadow-md">
-              <div className="flex mb-4">
-                {'⭐⭐⭐⭐⭐'.split('').map((star, i) => (
-                  <span key={i}>{star}</span>
+              <div className="flex mb-4 gap-1">
+                {Array(5).fill(null).map((_, i) => (
+                  <Star key={i} className="w-5 h-5" />
                 ))}
               </div>
               <p className="text-gray-700 mb-6">
@@ -198,9 +221,9 @@ export default function Home() {
             </div>
             {/* Testimonial 2 */}
             <div className="bg-white p-8 rounded-lg shadow-md">
-              <div className="flex mb-4">
-                {'⭐⭐⭐⭐⭐'.split('').map((star, i) => (
-                  <span key={i}>{star}</span>
+              <div className="flex mb-4 gap-1">
+                {Array(5).fill(null).map((_, i) => (
+                  <Star key={i} className="w-5 h-5" />
                 ))}
               </div>
               <p className="text-gray-700 mb-6">
@@ -222,9 +245,9 @@ export default function Home() {
             </div>
             {/* Testimonial 3 */}
             <div className="bg-white p-8 rounded-lg shadow-md">
-              <div className="flex mb-4">
-                {'⭐⭐⭐⭐⭐'.split('').map((star, i) => (
-                  <span key={i}>{star}</span>
+              <div className="flex mb-4 gap-1">
+                {Array(5).fill(null).map((_, i) => (
+                  <Star key={i} className="w-5 h-5" />
                 ))}
               </div>
               <p className="text-gray-700 mb-6">
@@ -248,58 +271,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="bg-slate-900 text-white py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
-            <div>
-              <h3 className="text-lg font-bold mb-4">Product</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="hover:text-blue-400">Features</a></li>
-                <li><a href="#" className="hover:text-blue-400">Pricing</a></li>
-                <li><a href="#" className="hover:text-blue-400">For Business</a></li>
-                <li><a href="#" className="hover:text-blue-400">Mobile App</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-bold mb-4">Company</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="hover:text-blue-400">About Us</a></li>
-                <li><a href="#" className="hover:text-blue-400">Careers</a></li>
-                <li><a href="#" className="hover:text-blue-400">Press</a></li>
-                <li><a href="#" className="hover:text-blue-400">Blog</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-bold mb-4">Support</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="hover:text-blue-400">Contact Us</a></li>
-                <li><a href="#" className="hover:text-blue-400">Help Center</a></li>
-                <li><a href="#" className="hover:text-blue-400">Support Status</a></li>
-              </ul>
-            </div>
-            <div>
-              <h3 className="text-lg font-bold mb-4">Legal</h3>
-              <ul className="space-y-2">
-                <li><a href="#" className="hover:text-blue-400">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-blue-400">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-blue-400">Cookie Policy</a></li>
-                <li><a href="#" className="hover:text-blue-400">Accessibility</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="flex justify-center gap-6 mb-8">
-            <a href="#" className="text-gray-400 hover:text-white">f</a>
-            <a href="#" className="text-gray-400 hover:text-white">𝕏</a>
-            <a href="#" className="text-gray-400 hover:text-white">in</a>
-            <a href="#" className="text-gray-400 hover:text-white">⚪</a>
-            <a href="#" className="text-gray-400 hover:text-white">▶</a>
-          </div>
-          <div className="border-t border-gray-700 pt-8 text-center text-gray-400">
-            <p>© 2025 StudyTracker. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -1,10 +1,5 @@
 import React from 'react';
 import { 
-  Home, 
-  BookOpen, 
-  Calendar, 
-  MessageSquare, 
-  Users, 
   Search,
   TrendingUp,
   TrendingDown,
@@ -29,19 +24,26 @@ const studentData = [
 const getGradeColor = (grade: number) => {
   if (grade >= 90) return 'bg-green-100 text-green-600';
   if (grade >= 80) return 'bg-blue-100 text-blue-600';
-  return 'bg-yellow-100 text-yellow-600';
+  return 'bg-red-100 text-red-600';
 };
 
+// New function to handle trend colors
+const getTrendStyle = (trend: string) => {
+  if (trend === 'up') return 'bg-green-50 text-green-600';
+  if (trend === 'down') return 'bg-red-50 text-red-600';
+  return 'bg-gray-50 text-gray-500';
+};
+
+// Separated icon logic to inherit the colors from the parent span
 const getTrendIcon = (trend: string) => {
-  if (trend === 'up') return <TrendingUp className="w-4 h-4 text-green-500" />;
-  if (trend === 'down') return <TrendingDown className="w-4 h-4 text-red-500" />;
-  return <Minus className="w-4 h-4 text-gray-400" />;
+  if (trend === 'up') return <TrendingUp className="w-4 h-4" />;
+  if (trend === 'down') return <TrendingDown className="w-4 h-4" />;
+  return <Minus className="w-4 h-4" />;
 };
 
 export default function StudentProgressDashboard() {
   return (
     <div className="flex h-screen bg-gray-50 font-sans">
-
       {/* Main Content */}
       <main className="flex-1 p-8 overflow-auto">
         <div className="max-w-6xl mx-auto bg-white rounded-xl shadow-sm border border-gray-200 p-6">
@@ -59,7 +61,7 @@ export default function StudentProgressDashboard() {
                 className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
               />
             </div>
-            <div className="w-32 border border-gray-200 rounded-lg"></div> {/* Placeholder for secondary action/filter button shown in design */}
+            <div className="w-32 border border-gray-200 rounded-lg"></div>
           </div>
 
           {/* Data Table */}
@@ -90,13 +92,17 @@ export default function StudentProgressDashboard() {
                     </td>
                     <td className="py-4 px-4">
                       <div className="flex justify-center">
-                        {getTrendIcon(student.trend)}
+                        {/* Applied the new trend style function here */}
+                        <span className={`flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium ${getTrendStyle(student.trend)}`}>
+                          {getTrendIcon(student.trend)}
+                          <span className="capitalize">{student.trend}</span>
+                        </span>
                       </div>
                     </td>
                     <td className="py-4 px-4 text-center text-gray-600">{student.assignments}</td>
                     <td className="py-4 px-4 text-center text-gray-600">{student.attendance}</td>
                     <td className="py-4 px-4 text-right">
-                      <button className="text-blue-500 hover:text-blue-700 font-medium text-sm transition-colors">
+                      <button className="text-blue-600 hover:text-blue-700 font-medium text-sm transition-colors cursor-pointer">
                         View Details
                       </button>
                     </td>
@@ -108,7 +114,6 @@ export default function StudentProgressDashboard() {
 
         </div>
       </main>
-
     </div>
   );
 }

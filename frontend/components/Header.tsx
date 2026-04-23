@@ -5,15 +5,28 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 const navLinks = [
-  { label: "Home", href: "/" },
-  { label: "Student", href: "/student" },
-  { label: "Teacher", href: "/teacher" },
-  { label: "About", href: "/about" },
+  { label: "Home", href: ["/"] }, // Updated to an array for consistency
+  { label: "Student", href: ["/student", "/student/assignments", "/student/classes"] },
+  { label: "Teacher", href: ["/teacher", "/teacher/assignments", "/teacher/classes", "/teacher/students"] },
+  //{ label: "About", href: ["/about"] },
 ];
 
 export default function Header() {
   const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  // Helper to check if the current pathname is in the link's href array
+  const checkIsActive = (hrefs: string | string[]) => {
+    if (Array.isArray(hrefs)) {
+      return hrefs.includes(pathname);
+    }
+    return pathname === hrefs;
+  };
+
+  // Helper to get the main URL to route to
+  const getPrimaryHref = (hrefs: string | string[]) => {
+    return Array.isArray(hrefs) ? hrefs[0] : hrefs;
+  };
 
   return (
     <header className="sticky top-0 z-50 bg-white border-b border-gray-200 shadow-sm">
@@ -21,19 +34,23 @@ export default function Header() {
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex items-center gap-1 ml-8">
-          {navLinks.map((link) => (
-            <Link
-              key={link.label}
-              href={link.href}
-              className={`relative px-4 py-1.5 rounded-md text-sm font-medium transition-colors no-underline
-                ${pathname === link.href
-                  ? "text-blue-600 bg-blue-50 font-semibold"
-                  : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"
-                }`}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const isActive = checkIsActive(link.href);
+            
+            return (
+              <Link
+                key={link.label}
+                href={getPrimaryHref(link.href)}
+                className={`relative px-4 py-1.5 rounded-md text-sm font-medium transition-colors no-underline
+                  ${isActive
+                    ? "text-blue-600 bg-blue-50 font-semibold"
+                    : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"
+                  }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Desktop Auth */}
@@ -67,20 +84,24 @@ export default function Header() {
       {/* Mobile Menu */}
       {menuOpen && (
         <div className="md:hidden flex flex-col gap-1 px-4 pb-4 pt-2 border-t border-gray-100 bg-white">
-          {navLinks.map((link) => (
-            <Link
-              key={link.label}
-              href={link.href}
-              onClick={() => { setMenuOpen(false); }}
-              className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors no-underline
-                ${pathname === link.href
-                  ? "bg-blue-50 text-blue-600"
-                  : "text-gray-600 hover:bg-blue-50 hover:text-blue-600"
-                }`}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const isActive = checkIsActive(link.href);
+
+            return (
+              <Link
+                key={link.label}
+                href={getPrimaryHref(link.href)}
+                onClick={() => { setMenuOpen(false); }}
+                className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors no-underline
+                  ${isActive
+                    ? "bg-blue-50 text-blue-600"
+                    : "text-gray-600 hover:bg-blue-50 hover:text-blue-600"
+                  }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
           <div className="flex gap-2 pt-3 mt-1 border-t border-gray-100">
             <Link href="/login" className="flex-1 text-center px-4 py-2 rounded-lg text-sm font-medium text-gray-600 border border-gray-300 hover:border-blue-500 hover:text-blue-600 transition-colors no-underline">
               Login

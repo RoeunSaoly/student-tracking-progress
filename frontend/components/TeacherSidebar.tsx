@@ -24,8 +24,8 @@ const mainNavItems: NavItem[] = [
   { label: "Home", href: "/teacher", icon: LayoutGrid },
   { label: "Classes", href: "/teacher/classes", icon: CalendarDays },
   { label: "Assignments", href: "/teacher/assignments", icon: ClipboardList },
-  { label: "Messages", href: "/teacher/messages", icon: MessageSquare, badge: 3 },
   { label: "Students", href: "/teacher/students", icon: Users },
+  { label: "Messages", href: "/teacher/messages", icon: MessageSquare, badge: 3 },
 ];
 
 const reportNavItems: NavItem[] = [
@@ -93,7 +93,7 @@ function NavLink({
         }`}
     >
       {isActive && (
-        <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] bg-blue-600 rounded-r-sm" />
+        <span className="absolute left-0 top-1.5 bottom-1.5 w-0.75 bg-blue-600 rounded-r-sm" />
       )}
       <Icon
         size={16}

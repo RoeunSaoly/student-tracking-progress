@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { User, Clock, MapPin } from "lucide-react";
 
 const classes = [
     {
@@ -78,33 +79,6 @@ const classes = [
 ];
 
 
-function UserIcon() {
-    return (
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ flexShrink: 0 }}>
-            <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-            <circle cx="12" cy="7" r="4" />
-        </svg>
-    );
-}
-
-function ClockIcon() {
-    return (
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ flexShrink: 0 }}>
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-        </svg>
-    );
-}
-
-function PinIcon() {
-    return (
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" style={{ flexShrink: 0 }}>
-            <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-            <circle cx="12" cy="10" r="3" />
-        </svg>
-    );
-}
-
 export default function MyClassesPage() {
     const [activeNav, setActiveNav] = useState("My Classes");
     const [activeTop, setActiveTop] = useState("Home");
@@ -143,9 +117,9 @@ export default function MyClassesPage() {
 
                                 {/* Meta rows */}
                                 <div style={s.meta}>
-                                    <div style={s.metaRow}><UserIcon />{cls.teacher}</div>
-                                    <div style={s.metaRow}><ClockIcon />{cls.time}</div>
-                                    <div style={s.metaRow}><PinIcon />{cls.room}</div>
+                                    <div style={s.metaRow}><User size={13} style={{ flexShrink: 0 }} />{cls.teacher}</div>
+                                    <div style={s.metaRow}><Clock size={13} style={{ flexShrink: 0 }} />{cls.time}</div>
+                                    <div style={s.metaRow}><MapPin size={13} style={{ flexShrink: 0 }} />{cls.room}</div>
                                 </div>
 
                                 {/* Footer */}
