@@ -44,7 +44,7 @@ export default function SignUpPage() {
           </div>
 
           {/* Right: Promo panel */}
-          <div className="hidden sm:flex w-56 flex-col justify-center p-8 bg-gradient-to-br from-purple-500 via-blue-500 to-blue-400 relative overflow-hidden">
+          <div className="hidden sm:flex w-56 flex-col justify-center p-8 bg-linear-to-br from-purple-500 via-blue-500 to-blue-400 relative overflow-hidden">
             {/* Decorative shapes */}
             <div className="absolute bottom-6 right-4 w-24 h-24 rounded-lg bg-white/10 rotate-12" />
             <div className="absolute bottom-14 right-10 w-16 h-16 rounded-lg bg-white/10 rotate-45" />

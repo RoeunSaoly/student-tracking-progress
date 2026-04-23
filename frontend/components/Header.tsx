@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 const navLinks = [
@@ -11,7 +12,7 @@ const navLinks = [
 ];
 
 export default function Header() {
-  const [active, setActive] = useState("Home");
+  const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
 
   return (
@@ -24,9 +25,8 @@ export default function Header() {
             <Link
               key={link.label}
               href={link.href}
-              onClick={() => setActive(link.label)}
               className={`relative px-4 py-1.5 rounded-md text-sm font-medium transition-colors no-underline
-                ${active === link.label
+                ${pathname === link.href
                   ? "text-blue-600 bg-blue-50 font-semibold"
                   : "text-gray-500 hover:text-blue-600 hover:bg-blue-50"
                 }`}
@@ -71,9 +71,9 @@ export default function Header() {
             <Link
               key={link.label}
               href={link.href}
-              onClick={() => { setActive(link.label); setMenuOpen(false); }}
+              onClick={() => { setMenuOpen(false); }}
               className={`px-4 py-2.5 rounded-lg text-sm font-medium transition-colors no-underline
-                ${active === link.label
+                ${pathname === link.href
                   ? "bg-blue-50 text-blue-600"
                   : "text-gray-600 hover:bg-blue-50 hover:text-blue-600"
                 }`}
