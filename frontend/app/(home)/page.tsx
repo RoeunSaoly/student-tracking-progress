@@ -199,7 +199,7 @@ export default function Home() {
             <div className="bg-white p-8 rounded-lg shadow-md">
               <div className="flex mb-4 gap-1">
                 {Array(5).fill(null).map((_, i) => (
-                  <Star key={i} className="w-5 h-5" />
+                  <Star key={i} className="w-5 h-5 text-amber-300 fill-amber-300" />
                 ))}
               </div>
               <p className="text-gray-700 mb-6">
@@ -223,7 +223,7 @@ export default function Home() {
             <div className="bg-white p-8 rounded-lg shadow-md">
               <div className="flex mb-4 gap-1">
                 {Array(5).fill(null).map((_, i) => (
-                  <Star key={i} className="w-5 h-5" />
+                  <Star key={i} className="w-5 h-5 text-amber-300 fill-amber-300" />
                 ))}
               </div>
               <p className="text-gray-700 mb-6">
@@ -247,7 +247,7 @@ export default function Home() {
             <div className="bg-white p-8 rounded-lg shadow-md">
               <div className="flex mb-4 gap-1">
                 {Array(5).fill(null).map((_, i) => (
-                  <Star key={i} className="w-5 h-5" />
+                  <Star key={i} className="w-5 h-5 text-amber-300 fill-amber-300" />
                 ))}
               </div>
               <p className="text-gray-700 mb-6">

@@ -34,14 +34,7 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="flex flex-col w-50 h-screen bg-white border-r border-gray-100 py-5">
-
-      <div className="border-t border-gray-100 mb-4" />
-
-      {/* Main Nav */}
-      <p className="px-5 pb-2 text-[11px] font-medium text-gray-400 uppercase tracking-widest">
-        Main
-      </p>
+    <aside className="flex flex-col w-50 h-screen bg-white border-r border-gray-100 py-5 sticky top-0">
       <nav className="flex flex-col">
         {mainNavItems.map((item) => (
           <NavLink
