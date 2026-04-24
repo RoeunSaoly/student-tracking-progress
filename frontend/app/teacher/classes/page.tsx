@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Users, Clock, Calendar, Plus, X } from "lucide-react";
+import Link from "next/link";
 
 const colorMap: Record<string, { bg: string; text: string; label: string }> = {
     blue:   { bg: "#DBEAFE", text: "#2563EB", label: "Blue" },
@@ -83,27 +84,29 @@ export default function MyClassesPage() {
                         {classes.map((cls) => {
                             const c = colorMap[cls.color];
                             return (
-                                <div key={cls.id} style={s.card}>
-                                    <div style={s.cardTopRow}>
-                                        <span style={{ ...s.periodBadge, backgroundColor: c.bg, color: c.text }}>
-                                            {cls.period}
-                                        </span>
-                                        <div style={s.studentCount}>
-                                            <Users size={15} style={{ flexShrink: 0 }} />
-                                            <span>{cls.students}</span>
+                                <Link key={cls.id} href={`/teacher/classes/${cls.id}`} style={{ textDecoration: "none" }}>
+                                    <div style={s.card}>
+                                        <div style={s.cardTopRow}>
+                                            <span style={{ ...s.periodBadge, backgroundColor: c.bg, color: c.text }}>
+                                                {cls.period}
+                                            </span>
+                                            <div style={s.studentCount}>
+                                                <Users size={15} style={{ flexShrink: 0 }} />
+                                                <span>{cls.students}</span>
+                                            </div>
+                                        </div>
+                                        <div style={s.className}>{cls.name}</div>
+                                        <div style={s.divider} />
+                                        <div style={s.metaRow}>
+                                            <Clock size={15} style={{ flexShrink: 0 }} />
+                                            <span>{cls.time}</span>
+                                        </div>
+                                        <div style={{ ...s.metaRow, marginTop: 6 }}>
+                                            <Calendar size={15} style={{ flexShrink: 0 }} />
+                                            <span>Next class: {cls.nextClass}</span>
                                         </div>
                                     </div>
-                                    <div style={s.className}>{cls.name}</div>
-                                    <div style={s.divider} />
-                                    <div style={s.metaRow}>
-                                        <Clock size={15} style={{ flexShrink: 0 }} />
-                                        <span>{cls.time}</span>
-                                    </div>
-                                    <div style={{ ...s.metaRow, marginTop: 6 }}>
-                                        <Calendar size={15} style={{ flexShrink: 0 }} />
-                                        <span>Next class: {cls.nextClass}</span>
-                                    </div>
-                                </div>
+                                </Link>
                             );
                         })}
                     </div>

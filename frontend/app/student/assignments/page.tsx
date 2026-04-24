@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Home, Grid, Clipboard, MessageSquare, FileText, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
 
 type FilterType = "All" | "Pending" | "In Progress" | "Submitted";
 
@@ -118,39 +119,48 @@ export default function AssignmentsPage() {
                     {/* Assignment list */}
                     <div style={s.assignmentList}>
                         {filtered.map((a, i) => (
-                            <div
-                                key={a.id}
-                                style={{
-                                    ...s.assignmentRow,
-                                    borderBottom: i < filtered.length - 1 ? "1px solid #F3F4F6" : "none",
+                            <Link 
+                                key={a.id} 
+                                href={`/student/assignments/${a.id}`}
+                                style={{ 
+                                    textDecoration: "none",
+                                    color: "inherit",
+                                    display: "block"
                                 }}
                             >
-                                <div style={s.assignmentLeft}>
-                                    {a.submitted ? (
-                                        <CheckCircle2 size={28} color="#22C55E" />
-                                    ) : (
-                                        <FileText size={28} color="#9CA3AF" />
-                                    )}
-                                    <div>
-                                        <div style={s.assignmentTitle}>{a.title}</div>
-                                        <div style={s.assignmentSubject}>{a.subject}</div>
+                                <div
+                                    style={{
+                                        ...s.assignmentRow,
+                                        borderBottom: i < filtered.length - 1 ? "1px solid #F3F4F6" : "none",
+                                    }}
+                                >
+                                    <div style={s.assignmentLeft}>
+                                        {a.submitted ? (
+                                            <CheckCircle2 size={28} color="#22C55E" />
+                                        ) : (
+                                            <FileText size={28} color="#9CA3AF" />
+                                        )}
+                                        <div>
+                                            <div style={s.assignmentTitle}>{a.title}</div>
+                                            <div style={s.assignmentSubject}>{a.subject}</div>
+                                        </div>
+                                    </div>
+                                    <div style={s.assignmentRight}>
+                                        <div style={{ textAlign: "right" }}>
+                                            <div style={s.dueDate}>Due: {a.due}</div>
+                                            <span style={{ ...s.statusBadge, ...statusStyle[a.status] }}>{a.status}</span>
+                                        </div>
+                                        <button
+                                            style={{
+                                                ...s.actionBtn,
+                                                backgroundColor: a.submitted ? "#374151" : "#2563EB",
+                                            }}
+                                        >
+                                            {a.submitted ? "View" : "Start"}
+                                        </button>
                                     </div>
                                 </div>
-                                <div style={s.assignmentRight}>
-                                    <div style={{ textAlign: "right" }}>
-                                        <div style={s.dueDate}>Due: {a.due}</div>
-                                        <span style={{ ...s.statusBadge, ...statusStyle[a.status] }}>{a.status}</span>
-                                    </div>
-                                    <button
-                                        style={{
-                                            ...s.actionBtn,
-                                            backgroundColor: a.submitted ? "#374151" : "#2563EB",
-                                        }}
-                                    >
-                                        {a.submitted ? "View" : "Start"}
-                                    </button>
-                                </div>
-                            </div>
+                            </Link>
                         ))}
                     </div>
                 </section>

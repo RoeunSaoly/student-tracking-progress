@@ -53,15 +53,14 @@ export default function StudentProgressDashboard() {
           
           {/* Search Bar */}
           <div className="flex gap-4 mb-8">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+            <div className="block w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg bg-white shadow-sm flex items-center">
               <input 
                 type="text" 
                 placeholder="Search students..." 
-                className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                className=" ml-8 w-full placeholder-gray-400 focus:outline-none text-gray-800 text-sm transition-all"
               />
+              <Search className=" relative right-4 h-5 w-5 text-gray-400" />
             </div>
-            <div className="w-32 border border-gray-200 rounded-lg"></div>
           </div>
 
           {/* Data Table */}

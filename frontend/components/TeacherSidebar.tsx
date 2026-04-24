@@ -54,22 +54,6 @@ export default function Sidebar() {
           />
         ))}
       </nav>
-
-      {/* Reports Nav */}
-      <div className="mt-4">
-        <p className="px-5 pb-2 text-[11px] font-medium text-gray-400 uppercase tracking-widest">
-          Reports
-        </p>
-        <nav className="flex flex-col">
-          {reportNavItems.map((item) => (
-            <NavLink
-              key={item.href}
-              item={item}
-              isActive={pathname === item.href}
-            />
-          ))}
-        </nav>
-      </div>
     </aside>
   );
 }

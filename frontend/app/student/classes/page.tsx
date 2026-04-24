@@ -1,7 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { User, Clock, MapPin } from "lucide-react";
+import { User, Clock, MapPin, X, ChevronDown } from "lucide-react";
+import Link from "next/link";
+
+const colors = [
+    { name: "Blue", value: "#3B82F6" },
+    { name: "Green", value: "#22C55E" },
+    { name: "Purple", value: "#A855F7" },
+    { name: "Orange", value: "#F59E0B" },
+    { name: "Red", value: "#EF4444" },
+];
 
 const classes = [
     {
@@ -82,6 +91,10 @@ const classes = [
 export default function MyClassesPage() {
     const [activeNav, setActiveNav] = useState("My Classes");
     const [activeTop, setActiveTop] = useState("Home");
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isColorDropdownOpen, setIsColorDropdownOpen] = useState(false);
+    const [classCode, setClassCode] = useState("");
+    const [selectedColor, setSelectedColor] = useState(colors[0]);
 
     return (
         <div style={{ fontFamily: "'Segoe UI', sans-serif", minHeight: "100vh", backgroundColor: "#f8fafc", display: "flex", flexDirection: "column" }}>
@@ -93,51 +106,119 @@ export default function MyClassesPage() {
                         <h1 style={s.h1}>My Classes</h1>
                         <p style={s.subtitle}>Spring Semester 2025</p>
                     </div>
-                    <button style={s.addBtn}>+ Add Class</button>
+                    <button style={s.addBtn} onClick={() => setIsModalOpen(true)}>+ Add Class</button>
                 </div>
 
                 <div style={s.grid}>
                     {classes.map((cls) => (
-                        <div key={cls.id} style={s.card}>
-                            {/* Color top bar */}
-                            <div style={{ height: 6, backgroundColor: cls.color }} />
+                        <Link key={cls.id} href={`/student/classes/${cls.id}`} style={{ textDecoration: "none" }}>
+                            <div style={s.card}>
+                                {/* Color top bar */}
+                                <div style={{ height: 6, backgroundColor: cls.color }} />
 
-                            <div style={s.cardInner}>
-                                {/* Title + Grade */}
-                                <div style={s.cardTop}>
-                                    <div>
-                                        <div style={s.cardName}>{cls.name}</div>
-                                        <div style={s.cardPeriod}>{cls.period}</div>
+                                <div style={s.cardInner}>
+                                    {/* Title + Grade */}
+                                    <div style={s.cardTop}>
+                                        <div>
+                                            <div style={s.cardName}>{cls.name}</div>
+                                            <div style={s.cardPeriod}>{cls.period}</div>
+                                        </div>
+                                        <div style={{ textAlign: "right" }}>
+                                            <div style={s.grade}>{cls.grade}</div>
+                                            <div style={s.gradeLabel}>Grade%</div>
+                                        </div>
                                     </div>
-                                    <div style={{ textAlign: "right" }}>
-                                        <div style={s.grade}>{cls.grade}</div>
-                                        <div style={s.gradeLabel}>Grade%</div>
-                                    </div>
-                                </div>
 
-                                {/* Meta rows */}
-                                <div style={s.meta}>
-                                    <div style={s.metaRow}><User size={13} style={{ flexShrink: 0 }} />{cls.teacher}</div>
-                                    <div style={s.metaRow}><Clock size={13} style={{ flexShrink: 0 }} />{cls.time}</div>
-                                    <div style={s.metaRow}><MapPin size={13} style={{ flexShrink: 0 }} />{cls.room}</div>
-                                </div>
-
-                                {/* Footer */}
-                                <div style={s.footer}>
-                                    <div style={s.footerRow}>
-                                        <span style={{ color: "#9CA3AF" }}>Assignments</span>
-                                        <span style={{ color: "#111827", fontWeight: 600 }}>{cls.assignments} total</span>
+                                    {/* Meta rows */}
+                                    <div style={s.meta}>
+                                        <div style={s.metaRow}><User size={13} style={{ flexShrink: 0 }} />{cls.teacher}</div>
+                                        <div style={s.metaRow}><Clock size={13} style={{ flexShrink: 0 }} />{cls.time}</div>
+                                        <div style={s.metaRow}><MapPin size={13} style={{ flexShrink: 0 }} />{cls.room}</div>
                                     </div>
-                                    <div style={s.footerRow}>
-                                        <span style={{ color: "#9CA3AF" }}>Next class</span>
-                                        <span style={{ color: "#111827", fontWeight: 600 }}>{cls.nextClass}</span>
+
+                                    {/* Footer */}
+                                    <div style={s.footer}>
+                                        <div style={s.footerRow}>
+                                            <span style={{ color: "#9CA3AF" }}>Assignments</span>
+                                            <span style={{ color: "#111827", fontWeight: 600 }}>{cls.assignments} total</span>
+                                        </div>
+                                        <div style={s.footerRow}>
+                                            <span style={{ color: "#9CA3AF" }}>Next class</span>
+                                            <span style={{ color: "#111827", fontWeight: 600 }}>{cls.nextClass}</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </Link>
                     ))}
                 </div>
             </main>
+
+            {/* Modal Overlay */}
+            {isModalOpen && (
+                <div style={s.overlay}>
+                    <div style={s.modal}>
+                        <div style={s.modalHeader}>
+                            <h2 style={s.modalTitle}>Join class</h2>
+                            <button style={s.closeBtn} onClick={() => setIsModalOpen(false)}>
+                                <X size={20} color="#6B7280" />
+                            </button>
+                        </div>
+
+                        <div style={s.modalBody}>
+                            <div style={s.inputGroup}>
+                                <label style={s.label}>Join class with code</label>
+                                <input
+                                    type="text"
+                                    placeholder="Enter code"
+                                    style={s.input}
+                                    value={classCode}
+                                    onChange={(e) => setClassCode(e.target.value)}
+                                />
+                            </div>
+
+                            <div style={s.inputGroup}>
+                                <label style={s.label}>Card Color</label>
+                                <div style={s.selectWrapper}>
+                                    <div style={s.select} onClick={() => setIsColorDropdownOpen(!isColorDropdownOpen)}>
+                                        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                            <div style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: selectedColor.value }} />
+                                            <span style={{ fontSize: 14, color: "#111827" }}>{selectedColor.name}</span>
+                                        </div>
+                                        <ChevronDown size={16} color="#9CA3AF" style={{ transform: isColorDropdownOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }} />
+                                    </div>
+                                    
+                                    {isColorDropdownOpen && (
+                                        <div style={s.dropdown}>
+                                            {colors.map((color) => (
+                                                <div
+                                                    key={color.name}
+                                                    style={{
+                                                        ...s.dropdownItem,
+                                                        backgroundColor: selectedColor.name === color.name ? "#F3F4F6" : "transparent"
+                                                    }}
+                                                    onClick={() => {
+                                                        setSelectedColor(color);
+                                                        setIsColorDropdownOpen(false);
+                                                    }}
+                                                >
+                                                    <div style={{ width: 14, height: 14, borderRadius: 3, backgroundColor: color.value }} />
+                                                    {color.name}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={s.modalFooter}>
+                            <button style={s.cancelBtn} onClick={() => setIsModalOpen(false)}>Cancel</button>
+                            <button style={s.submitBtn} onClick={() => setIsModalOpen(false)}>Add Class</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
@@ -246,5 +327,137 @@ const s: Record<string, React.CSSProperties> = {
         display: "flex",
         justifyContent: "space-between",
         fontSize: 12,
+    },
+    overlay: {
+        position: "fixed",
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.4)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 1000,
+        padding: 20,
+    },
+    modal: {
+        backgroundColor: "#fff",
+        borderRadius: 16,
+        width: "100%",
+        maxWidth: 480,
+        boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+        overflow: "hidden",
+    },
+    modalHeader: {
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "20px 24px",
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 700,
+        color: "#111827",
+        margin: 0,
+    },
+    closeBtn: {
+        background: "none",
+        border: "none",
+        cursor: "pointer",
+        padding: 4,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        borderRadius: "50%",
+        transition: "background-color 0.2s",
+    },
+    modalBody: {
+        padding: "0 24px 24px",
+        display: "flex",
+        flexDirection: "column",
+        gap: 20,
+    },
+    inputGroup: {
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+    },
+    label: {
+        fontSize: 14,
+        fontWeight: 500,
+        color: "#374151",
+    },
+    input: {
+        width: "100%",
+        padding: "12px 16px",
+        backgroundColor: "#F3F4F6",
+        border: "1px solid transparent",
+        borderRadius: 10,
+        fontSize: 14,
+        color: "#111827",
+        outline: "none",
+    },
+    selectWrapper: {
+        position: "relative",
+    },
+    select: {
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        width: "100%",
+        padding: "12px 16px",
+        backgroundColor: "#F3F4F6",
+        borderRadius: 10,
+        cursor: "pointer",
+    },
+    dropdown: {
+        position: "absolute",
+        top: "calc(100% + 4px)",
+        left: 0,
+        right: 0,
+        backgroundColor: "#fff",
+        borderRadius: 10,
+        boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
+        border: "1px solid #E5E7EB",
+        zIndex: 10,
+        padding: 4,
+    },
+    dropdownItem: {
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        padding: "8px 12px",
+        borderRadius: 8,
+        fontSize: 14,
+        color: "#374151",
+        cursor: "pointer",
+        transition: "background-color 0.2s",
+    },
+    modalFooter: {
+        display: "flex",
+        justifyContent: "flex-end",
+        gap: 12,
+        padding: "0 24px 24px",
+    },
+    cancelBtn: {
+        padding: "10px 24px",
+        borderRadius: 10,
+        border: "1px solid #E5E7EB",
+        backgroundColor: "#fff",
+        fontSize: 14,
+        fontWeight: 600,
+        color: "#374151",
+        cursor: "pointer",
+    },
+    submitBtn: {
+        padding: "10px 24px",
+        borderRadius: 10,
+        border: "none",
+        backgroundColor: "#2563EB",
+        fontSize: 14,
+        fontWeight: 600,
+        color: "#fff",
+        cursor: "pointer",
     },
 };
