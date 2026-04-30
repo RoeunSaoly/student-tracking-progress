@@ -1,7 +1,7 @@
 import express from "express";
 import * as controller from "./class.controller.js";
-import { protect } from "../../middlewares/auth.middleware.js";
-import { authorize } from "../../middlewares/role.middleware.js";
+import { authenticate } from "../../middlewares/auth.middleware.js";
+import { authorizePermission } from "../../middlewares/permission.middleware.js";
 
 const router = express.Router();
 
@@ -13,18 +13,42 @@ const router = express.Router();
 
 /**
  * @swagger
- * /api/classes:
+ * /classes:
  *   post:
  *     summary: Create class (Teacher only)
  *     tags: [Classes]
  *     security:
  *       - bearerAuth: []
  */
-router.post("/", protect, authorize("teacher"), controller.createClass);
+router.post("/", authenticate, authorizePermission("class.create"), controller.createClass);
 
 /**
  * @swagger
- * /api/classes:
+ * /classes/join:
+ *   post:
+ *     summary: Join class by code (Student only)
+ *     tags: [Classes]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [code]
+ *             properties:
+ *               code:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Joined class successfully
+ */
+router.post("/join", authenticate, authorizePermission("class.join"), controller.joinClass);
+
+/**
+ * @swagger
+ * /classes:
  *   get:
  *     summary: Get all classes
  *     tags: [Classes]
@@ -33,7 +57,7 @@ router.get("/", controller.getAllClasses);
 
 /**
  * @swagger
- * /api/classes/{id}:
+ * /classes/{id}:
  *   get:
  *     summary: Get class by ID
  */
@@ -41,14 +65,14 @@ router.get("/:id", controller.getClassById);
 
 /**
  * @swagger
- * /api/classes/{id}:
+ * /classes/{id}:
  *   delete:
  *     summary: Delete class
  */
 router.delete(
   "/:id",
-  protect,
-  authorize("teacher", "admin"),
+  authenticate,
+  authorizePermission("class.delete"),
   controller.deleteClass
 );
 

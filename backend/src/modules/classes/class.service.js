@@ -30,3 +30,22 @@ export const deleteClass = async (id, user) => {
 
   await repo.deleteClass(id);
 };
+
+export const joinClass = async (code, studentId) => {
+  const classData = await repo.findByCode(code);
+  if (!classData) {
+    throw new Error("Class not found with this code");
+  }
+
+  const isEnrolled = await repo.checkEnrollment(classData.id, studentId);
+  if (isEnrolled) {
+    throw new Error("You are already enrolled in this class");
+  }
+
+  await repo.enrollStudent(classData.id, studentId);
+
+  return {
+    message: "Joined class successfully",
+    class: classData,
+  };
+};

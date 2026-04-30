@@ -13,16 +13,41 @@ CREATE TABLE roles (
 );
 
 -- =====================================
--- USERS (AUTH ONLY)
+-- USERS
 -- =====================================
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    role_id INT NOT NULL,
     username VARCHAR(50) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
     is_active BOOLEAN DEFAULT TRUE,
+    is_validated BOOLEAN DEFAULT FALSE,
+    is_deleted BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (role_id) REFERENCES roles(id)
+);
+
+-- =====================================
+-- PERMISSIONS
+-- =====================================
+CREATE TABLE permissions (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) UNIQUE NOT NULL
+);
+
+-- =====================================
+-- ROLE PERMISSIONS
+-- =====================================
+CREATE TABLE role_permissions (
+    role_id INT,
+    permission_id INT,
+    PRIMARY KEY (role_id, permission_id),
+
+    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE,
+    FOREIGN KEY (permission_id) REFERENCES permissions(id) ON DELETE CASCADE
 );
 
 -- =====================================
@@ -38,18 +63,6 @@ CREATE TABLE user_profiles (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
--- =====================================
--- USER ROLES (MANY-TO-MANY)
--- =====================================
-CREATE TABLE user_roles (
-    user_id INT,
-    role_id INT,
-    PRIMARY KEY (user_id, role_id),
-
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (role_id) REFERENCES roles(id) ON DELETE CASCADE
 );
 
 -- =====================================
@@ -118,8 +131,8 @@ CREATE TABLE submissions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     assignment_id INT NOT NULL,
     student_id INT NOT NULL,
-    file_url VARCHAR(500),
-    status ENUM('submitted','late','missing') DEFAULT 'submitted',
+    file_path VARCHAR(500),
+    status ENUM('submitted','late','pending') DEFAULT 'pending',
     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     UNIQUE (assignment_id, student_id),
@@ -140,6 +153,8 @@ CREATE TABLE grades (
 
     FOREIGN KEY (submission_id) REFERENCES submissions(id) ON DELETE CASCADE
 );
+
+
 
 -- =====================================
 -- GOALS

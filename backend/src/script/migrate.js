@@ -30,36 +30,62 @@ const runMigration = async () => {
     console.log("Schema created");
 
     // =====================================
+    // 🌱 SEED PERMISSIONS
+    // =====================================
+    const permissions = [
+      "user.read", "user.update", "user.delete",
+      "class.create", "class.delete", "class.join",
+      "assignment.create", "assignment.submit",
+      "submission.view", "grade.create", "admin.dashboard", "admin.logs"
+    ];
+
+    for (const p of permissions) {
+      await connection.query("INSERT INTO permissions (name) VALUES (?)", [p]);
+    }
+
+    // =====================================
+    // 🌱 SEED ROLE PERMISSIONS
+    // =====================================
+    const [roleRows] = await connection.query("SELECT id, name FROM roles");
+    const roles = {};
+    roleRows.forEach(r => roles[r.name] = r.id);
+
+    const [permRows] = await connection.query("SELECT id, name FROM permissions");
+    const perms = {};
+    permRows.forEach(p => perms[p.name] = p.id);
+
+    const roleMap = {
+      admin: permissions,
+      teacher: ["class.create", "class.delete", "assignment.create", "submission.view", "grade.create", "user.read"],
+      student: ["class.join", "assignment.submit", "submission.view", "user.read"]
+    };
+
+    for (const [roleName, rolePerms] of Object.entries(roleMap)) {
+      const roleId = roles[roleName];
+      for (const pName of rolePerms) {
+        await connection.query(
+          "INSERT INTO role_permissions (role_id, permission_id) VALUES (?, ?)",
+          [roleId, perms[pName]]
+        );
+      }
+    }
+
+    console.log("Permissions seeded 🛡️");
+
+    // =====================================
     // 🌱 SEED ADMIN USER
     // =====================================
-
-    const password = "admin123"; // change later
+    const password = "admin123";
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 1. Create admin user
     const [userResult] = await connection.query(
-      `INSERT INTO users (username, email, password_hash)
-       VALUES (?, ?, ?)`,
-      ["admin", "admin@example.com", hashedPassword]
+      `INSERT INTO users (username, email, password_hash, role_id, is_validated)
+       VALUES (?, ?, ?, ?, ?)`,
+      ["admin", "admin@example.com", hashedPassword, roles.admin, true]
     );
 
     const adminId = userResult.insertId;
 
-    // 2. Get admin role id
-    const [roles] = await connection.query(
-      `SELECT id FROM roles WHERE name = 'admin'`
-    );
-
-    const roleId = roles[0].id;
-
-    // 3. Assign role
-    await connection.query(
-      `INSERT INTO user_roles (user_id, role_id)
-       VALUES (?, ?)`,
-      [adminId, roleId]
-    );
-
-    // 4. Create profile
     await connection.query(
       `INSERT INTO user_profiles (user_id, first_name, last_name)
        VALUES (?, ?, ?)`,

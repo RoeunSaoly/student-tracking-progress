@@ -1,6 +1,6 @@
 import { verifyAccessToken } from "../utils/jwt.js";
 
-export const protect = (req, res, next) => {
+export const authenticate = (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
 

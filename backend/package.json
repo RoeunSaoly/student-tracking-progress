@@ -6,6 +6,9 @@
   "scripts": {
     "start": "src/server.js",
     "dev": "nodemon src/server.js",
+    "migrate": "node src/script/migrate.js",
+    "seed": "node src/script/seed.js",
+    "db:reset": "npm run migrate && npm run seed",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
