@@ -1,7 +1,7 @@
 import { Router } from "express";
 import * as userController from "./user.controller.js";
 
-import { protect } from "../../middlewares/auth.middleware.js";
+import { authenticate } from "../../middlewares/auth.middleware.js";
 import upload from "../../middlewares/upload.middleware.js";
 
 const router = Router();
@@ -31,7 +31,7 @@ const router = Router();
  *       401:
  *         description: Unauthorized
  */
-router.get("/me", protect, userController.getMe);
+router.get("/me", authenticate, userController.getMe);
 
 /**
  * @swagger
@@ -60,7 +60,7 @@ router.get("/me", protect, userController.getMe);
  *       401:
  *         description: Unauthorized
  */
-router.put("/profile", protect, userController.updateProfile);
+router.put("/profile", authenticate, userController.updateProfile);
 
 /**
  * @swagger
@@ -90,7 +90,7 @@ router.put("/profile", protect, userController.updateProfile);
  */
 router.post(
     "/avatar",
-    protect,
+    authenticate,
     upload.single("avatar"),
     userController.uploadAvatar
 );
