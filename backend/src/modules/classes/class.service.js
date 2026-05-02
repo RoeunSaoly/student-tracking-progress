@@ -49,3 +49,16 @@ export const joinClass = async (code, studentId) => {
     class: classData,
   };
 };
+
+export const removeStudentFromClass = async (classId, studentId, user) => {
+  const classData = await repo.findById(classId);
+  if (!classData) throw new Error("Class not found");
+
+  // Only the teacher of the class or admin can remove a student
+  if (user.role !== "admin" && classData.teacher_id !== user.id) {
+    throw new Error("Unauthorized: Only the class teacher can remove students");
+  }
+
+  await repo.removeStudent(classId, studentId);
+  return { message: "Student removed from class successfully" };
+};

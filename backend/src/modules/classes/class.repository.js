@@ -52,3 +52,10 @@ export const enrollStudent = async (classId, studentId) => {
     [classId, studentId]
   );
 };
+
+export const removeStudent = async (classId, studentId) => {
+  await db.query(
+    `DELETE FROM enrollments WHERE class_id = ? AND student_id = ?`,
+    [classId, studentId]
+  );
+};
