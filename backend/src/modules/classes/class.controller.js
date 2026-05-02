@@ -54,3 +54,15 @@ export const joinClass = async (req, res) => {
     res.status(statusCode).json({ message: err.message });
   }
 };
+
+export const removeStudent = async (req, res) => {
+  try {
+    const { id, studentId } = req.params;
+    const result = await service.removeStudentFromClass(id, studentId, req.user);
+    await logActivity(req.user.id, `Removed student ID: ${studentId} from class ID: ${id}`);
+    res.json(result);
+  } catch (err) {
+    const statusCode = err.message.includes("Unauthorized") ? 403 : 404;
+    res.status(statusCode).json({ message: err.message });
+  }
+};

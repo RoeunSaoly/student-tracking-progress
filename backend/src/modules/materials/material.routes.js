@@ -1,23 +1,25 @@
 import { Router } from "express";
-import * as controller from "./assignment.controller.js";
+import * as controller from "./material.controller.js";
 import { authenticate } from "../../middlewares/auth.middleware.js";
 import { authorizePermission } from "../../middlewares/permission.middleware.js";
+import { validateRequest } from "../../core/middlewares/validate.middleware.js";
+import { materialSchema, updateMaterialSchema } from "./material.validation.js";
 
 const router = Router();
 
 /**
  * @swagger
  * tags:
- *   name: Assignments
- *   description: Assignment management and submissions
+ *   name: Materials
+ *   description: Class materials management
  */
 
 /**
  * @swagger
- * /assignments:
+ * /materials:
  *   post:
- *     summary: Create a new assignment (Teacher only)
- *     tags: [Assignments]
+ *     summary: Upload new material (Teacher only)
+ *     tags: [Materials]
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -26,7 +28,7 @@ const router = Router();
  *         application/json:
  *           schema:
  *             type: object
- *             required: [class_id, title, due_date]
+ *             required: [class_id, title, file_path]
  *             properties:
  *               class_id:
  *                 type: integer
@@ -34,23 +36,20 @@ const router = Router();
  *                 type: string
  *               description:
  *                 type: string
- *               due_date:
+ *               file_path:
  *                 type: string
- *                 format: date-time
- *               max_score:
- *                 type: integer
  *     responses:
  *       201:
- *         description: Assignment created
+ *         description: Material uploaded
  */
-router.post("/", authenticate, authorizePermission("assignment.create"), controller.createAssignment);
+router.post("/", authenticate, authorizePermission("class.update"), validateRequest(materialSchema), controller.createMaterial);
 
 /**
  * @swagger
- * /assignments:
+ * /materials:
  *   get:
- *     summary: Get assignments (Filter by class_id)
- *     tags: [Assignments]
+ *     summary: Get materials for a class
+ *     tags: [Materials]
  *     security:
  *       - bearerAuth: []
  *     parameters:
@@ -59,49 +58,46 @@ router.post("/", authenticate, authorizePermission("assignment.create"), control
  *         schema:
  *           type: integer
  *         required: true
- *         description: ID of the class
  *     responses:
  *       200:
- *         description: List of assignments
+ *         description: List of materials
  */
-router.get("/", authenticate, controller.getAllAssignments);
-
-
+router.get("/", authenticate, controller.getMaterialsByClass);
 
 /**
  * @swagger
- * /assignments/{id}:
+ * /materials/{id}:
  *   get:
- *     summary: Get assignment by ID
- *     tags: [Assignments]
+ *     summary: Get material by ID
+ *     tags: [Materials]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
+ *         required: true
  *         schema:
  *           type: integer
- *         required: true
  *     responses:
  *       200:
- *         description: Assignment details
+ *         description: Material details
  */
-router.get("/:id", authenticate, controller.getAssignmentById);
+router.get("/:id", authenticate, controller.getMaterialById);
 
 /**
  * @swagger
- * /assignments/{id}:
+ * /materials/{id}:
  *   put:
- *     summary: Update assignment (Teacher only)
- *     tags: [Assignments]
+ *     summary: Update material (Teacher only)
+ *     tags: [Materials]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
+ *         required: true
  *         schema:
  *           type: integer
- *         required: true
  *     requestBody:
  *       content:
  *         application/json:
@@ -112,37 +108,32 @@ router.get("/:id", authenticate, controller.getAssignmentById);
  *                 type: string
  *               description:
  *                 type: string
- *               due_date:
+ *               file_path:
  *                 type: string
- *                 format: date-time
- *               max_score:
- *                 type: integer
  *     responses:
  *       200:
- *         description: Assignment updated
+ *         description: Material updated
  */
-router.put("/:id", authenticate, authorizePermission("assignment.create"), controller.updateAssignment);
+router.put("/:id", authenticate, authorizePermission("class.update"), validateRequest(updateMaterialSchema), controller.updateMaterial);
 
 /**
  * @swagger
- * /assignments/{id}:
+ * /materials/{id}:
  *   delete:
- *     summary: Delete assignment (Teacher only)
- *     tags: [Assignments]
+ *     summary: Delete material (Teacher only)
+ *     tags: [Materials]
  *     security:
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
+ *         required: true
  *         schema:
  *           type: integer
- *         required: true
  *     responses:
  *       200:
- *         description: Assignment deleted
+ *         description: Material deleted
  */
-router.delete("/:id", authenticate, authorizePermission("assignment.create"), controller.deleteAssignment);
-
-
+router.delete("/:id", authenticate, authorizePermission("class.update"), controller.deleteMaterial);
 
 export default router;

@@ -15,10 +15,6 @@ export const updateAssignmentSchema = Joi.object({
   max_score: Joi.number(),
 });
 
-export const submissionSchema = Joi.object({
-  assignment_id: Joi.number().required(),
-  file_path: Joi.string().required(),
-});
 
 export const gradeSchema = Joi.object({
   grade: Joi.number().min(0).required(),

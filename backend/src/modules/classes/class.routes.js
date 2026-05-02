@@ -76,4 +76,33 @@ router.delete(
   controller.deleteClass
 );
 
+/**
+ * @swagger
+ * /classes/{id}/enrollments/{studentId}:
+ *   delete:
+ *     summary: Remove a student from class
+ *     tags: [Classes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: studentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Student removed successfully
+ */
+router.delete(
+  "/:id/enrollments/:studentId",
+  authenticate,
+  controller.removeStudent
+);
+
 export default router;

@@ -1,5 +1,5 @@
 import * as service from "./assignment.service.js";
-import { assignmentSchema, updateAssignmentSchema, submissionSchema } from "./assignment.validation.js";
+import { assignmentSchema, updateAssignmentSchema } from "./assignment.validation.js";
 import { logActivity } from "../logs/log.service.js";
 
 export const createAssignment = async (req, res) => {
@@ -59,42 +59,5 @@ export const deleteAssignment = async (req, res) => {
   }
 };
 
-// Submissions
-export const submitAssignment = async (req, res) => {
-  try {
-    const { error } = submissionSchema.validate(req.body);
-    if (error) return res.status(400).json({ message: error.details[0].message });
-
-    const result = await service.submitAssignment({
-      ...req.body,
-      student_id: req.user.id
-    });
-    await logActivity(req.user.id, `Submitted assignment ID: ${req.body.assignment_id}`);
-    res.status(201).json(result);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-export const getSubmissions = async (req, res) => {
-  try {
-    const { assignment_id } = req.query;
-    if (!assignment_id) return res.status(400).json({ message: "assignment_id is required" });
-
-    const result = await service.getSubmissionsByAssignment(assignment_id);
-    res.json(result);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
-
-export const getMySubmissions = async (req, res) => {
-  try {
-    const result = await service.getSubmissionsByStudent(req.user.id);
-    res.json(result);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
 
 
