@@ -64,7 +64,7 @@ router.post("/", authenticate, authorizePermission("assignment.create"), control
  *       200:
  *         description: List of assignments
  */
-router.get("/", authenticate, controller.getAllAssignments);
+router.get("/", authenticate, controller.getAssignmentsByClass);
 
 
 

@@ -57,3 +57,30 @@ export const updateUser = async (id, data) => {
 export const softDeleteUser = async (id) => {
     await db.query(`UPDATE users SET is_deleted = TRUE WHERE id = ?`, [id]);
 };
+
+export const getStudentAcademicRecord = async (studentId) => {
+    const [grades] = await db.query(
+        `SELECT g.*, a.title as assignment_title, c.name as class_name
+         FROM grades g
+         JOIN submissions s ON g.submission_id = s.id
+         JOIN assignments a ON s.assignment_id = a.id
+         JOIN classes c ON a.class_id = c.id
+         WHERE s.student_id = ?`,
+        [studentId]
+    );
+
+    const [goals] = await db.query(
+        `SELECT * FROM goals WHERE student_id = ?`,
+        [studentId]
+    );
+
+    const [enrollments] = await db.query(
+        `SELECT c.name, e.enrolled_at, e.status
+         FROM enrollments e
+         JOIN classes c ON e.class_id = c.id
+         WHERE e.student_id = ?`,
+        [studentId]
+    );
+
+    return { grades, goals, enrollments };
+};

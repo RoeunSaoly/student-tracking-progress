@@ -66,3 +66,21 @@ export const removeStudent = async (req, res) => {
     res.status(statusCode).json({ message: err.message });
   }
 };
+
+export const updateClass = async (req, res) => {
+  try {
+    const result = await service.updateClass(req.params.id, req.body, req.user);
+    res.json(result);
+  } catch (err) {
+    res.status(403).json({ message: err.message });
+  }
+};
+
+export const getEnrolledStudents = async (req, res) => {
+  try {
+    const result = await service.getEnrolledStudents(req.params.id, req.user);
+    res.json(result);
+  } catch (err) {
+    res.status(403).json({ message: err.message });
+  }
+};

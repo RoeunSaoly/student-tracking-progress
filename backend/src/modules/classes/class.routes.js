@@ -105,4 +105,7 @@ router.delete(
   controller.removeStudent
 );
 
+router.put("/:id", authenticate, authorizePermission("class.create"), controller.updateClass);
+router.get("/:id/students", authenticate, controller.getEnrolledStudents);
+
 export default router;

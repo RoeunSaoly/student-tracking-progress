@@ -3,10 +3,14 @@ import { logActivity } from "../logs/log.service.js";
 import { asyncHandler } from "../../core/utils/asyncHandler.js";
 
 export const submitAssignment = asyncHandler(async (req, res) => {
+  if (!req.file) throw new Error("No file uploaded");
+
   const result = await service.submitAssignment({
-    ...req.body,
-    student_id: req.user.id
+    assignment_id: req.body.assignment_id,
+    student_id: req.user.id,
+    file_path: `/uploads/submissions/${req.file.filename}`
   });
+  
   await logActivity(req.user.id, `Submitted assignment ID: ${req.body.assignment_id}`);
   res.status(201).json(result);
 });

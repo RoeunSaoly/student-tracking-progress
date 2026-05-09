@@ -39,5 +39,6 @@ router.get("/student", authenticate, authorizeRoles("student"), controller.getSt
  *         description: Teacher dashboard data
  */
 router.get("/teacher", authenticate, authorizeRoles("teacher"), controller.getTeacherDashboard);
+router.get("/admin", authenticate, authorizeRoles("admin"), controller.getAdminDashboard);
 
 export default router;

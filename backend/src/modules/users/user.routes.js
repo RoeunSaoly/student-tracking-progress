@@ -95,4 +95,6 @@ router.post(
     userController.uploadAvatar
 );
 
+router.get("/academic-record", authenticate, userController.getAcademicRecord);
+
 export default router;

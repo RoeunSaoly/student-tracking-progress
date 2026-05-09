@@ -20,3 +20,15 @@ export const checkSubmissionExists = async (submissionId) => {
     const [rows] = await db.query(`SELECT id FROM submissions WHERE id = ?`, [submissionId]);
     return rows.length > 0;
 }
+
+export const findTeacherBySubmissionId = async (submissionId) => {
+    const [rows] = await db.query(
+        `SELECT c.teacher_id, a.max_score
+         FROM submissions s
+         JOIN assignments a ON s.assignment_id = a.id
+         JOIN classes c ON a.class_id = c.id
+         WHERE s.id = ?`,
+        [submissionId]
+    );
+    return rows[0];
+};

@@ -23,3 +23,14 @@ export const deleteUser = asyncHandler(async (req, res) => {
     const result = await service.deleteUser(req.params.id, req.user.id);
     res.json(result);
 });
+
+export const validateTeacher = asyncHandler(async (req, res) => {
+    const { is_validated } = req.body;
+    const result = await service.validateTeacher(req.params.id, is_validated);
+    res.json(result);
+});
+
+export const getStudentDetails = asyncHandler(async (req, res) => {
+    const student = await service.getStudentDetails(req.params.id);
+    res.json(student);
+});

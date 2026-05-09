@@ -10,6 +10,7 @@ import dashboardRoutes from "../modules/dashboard/dashboard.routes.js";
 import messageRoutes from "../modules/messages/message.routes.js";
 import gradeRoutes from "../modules/grades/grade.routes.js";
 import adminRoutes from "../modules/admin/admin.routes.js";
+import studentRoutes from "../modules/students/student.routes.js";
 
 
 const router = express.Router();
@@ -25,5 +26,6 @@ router.use("/dashboard", dashboardRoutes);
 router.use("/messages", messageRoutes);
 router.use("/grades", gradeRoutes);
 router.use("/admin", adminRoutes);
+router.use("/students", studentRoutes);
 
 export default router;

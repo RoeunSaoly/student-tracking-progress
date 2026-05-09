@@ -2,6 +2,7 @@ import { Router } from "express";
 import * as controller from "./material.controller.js";
 import { authenticate } from "../../middlewares/auth.middleware.js";
 import { authorizePermission } from "../../middlewares/permission.middleware.js";
+import upload from "../../middlewares/upload.middleware.js";
 import { validateRequest } from "../../core/middlewares/validate.middleware.js";
 import { materialSchema, updateMaterialSchema } from "./material.validation.js";
 
@@ -25,10 +26,10 @@ const router = Router();
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
- *             required: [class_id, title, file_path]
+ *             required: [class_id, title, file]
  *             properties:
  *               class_id:
  *                 type: integer
@@ -36,13 +37,14 @@ const router = Router();
  *                 type: string
  *               description:
  *                 type: string
- *               file_path:
+ *               file:
  *                 type: string
+ *                 format: binary
  *     responses:
  *       201:
  *         description: Material uploaded
  */
-router.post("/", authenticate, authorizePermission("class.update"), validateRequest(materialSchema), controller.createMaterial);
+router.post("/", authenticate, authorizePermission("class.update"), upload.single("file"), controller.createMaterial);
 
 /**
  * @swagger

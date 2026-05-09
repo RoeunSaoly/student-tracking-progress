@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { authenticate } from "../../middlewares/auth.middleware.js";
+import { authorizeRoles } from "../../middlewares/role.middleware.js";
 
 import dashboardRoutes from "./dashboard/dashboard.routes.js";
 import userRoutes from "./users/user.routes.js";
@@ -9,8 +10,9 @@ import logRoutes from "./logs/log.routes.js";
 
 const router = Router();
 
-// Apply global authentication for all admin routes
+// Apply global authentication and admin-only role check
 router.use(authenticate);
+router.use(authorizeRoles("admin"));
 
 // Register sub-routes
 router.use("/dashboard", dashboardRoutes);

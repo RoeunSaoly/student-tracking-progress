@@ -26,3 +26,12 @@ export const uploadAvatar = async (req, res, next) => {
         next(err);
     }
 };
+
+export const getAcademicRecord = async (req, res, next) => {
+    try {
+        const record = await service.getAcademicRecord(req.user.id);
+        res.json(record);
+    } catch (err) {
+        next(err);
+    }
+};
