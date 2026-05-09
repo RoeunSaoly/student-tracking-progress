@@ -31,6 +31,18 @@ export const deleteClass = async (id, user) => {
   await repo.deleteClass(id);
 };
 
+export const updateClass = async (id, data, user) => {
+  const classData = await repo.findById(id);
+  if (!classData) throw new Error("Class not found");
+
+  if (user.role !== "admin" && classData.teacher_id !== user.id) {
+    throw new Error("Unauthorized: Only the class teacher can update details");
+  }
+
+  await repo.updateClass(id, data);
+  return { message: "Class updated successfully" };
+};
+
 export const joinClass = async (code, studentId) => {
   const classData = await repo.findByCode(code);
   if (!classData) {
@@ -61,4 +73,17 @@ export const removeStudentFromClass = async (classId, studentId, user) => {
 
   await repo.removeStudent(classId, studentId);
   return { message: "Student removed from class successfully" };
+};
+
+export const getEnrolledStudents = async (classId, user) => {
+  const classData = await repo.findById(classId);
+  if (!classData) throw new Error("Class not found");
+
+  // Only the teacher of the class, admin, or an enrolled student can see the list
+  // For now, let's allow teachers and admins
+  if (user.role !== "admin" && classData.teacher_id !== user.id) {
+    throw new Error("Unauthorized");
+  }
+
+  return await repo.findEnrolledStudents(classId);
 };

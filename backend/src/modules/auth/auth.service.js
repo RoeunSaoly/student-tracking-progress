@@ -3,10 +3,16 @@ import { hashPassword, comparePassword } from "../../utils/hash.js";
 import {
     generateAccessToken,
     generateRefreshToken,
+    verifyRefreshToken,
 } from "../../utils/jwt.js";
+import { logActivity } from "../logs/log.service.js";
 
 export const register = async (data) => {
     const { email, password, username, role = "student" } = data;
+
+    if (role === "admin") {
+        throw new Error("Cannot register as admin via public endpoint");
+    }
 
     const existing = await repo.findByEmail(email);
     if (existing) throw new Error("Email already exists");
@@ -16,38 +22,74 @@ export const register = async (data) => {
 
     const password_hash = await hashPassword(password);
 
+    // Students are validated by default, teachers need admin approval
+    const is_validated = role === "student";
+
     const userId = await repo.createUser({
         email,
         username,
         password_hash,
-        role_id
+        role_id,
+        is_validated
     });
 
-    const accessToken = generateAccessToken({ id: userId, role_id });
+    await repo.createProfile(userId);
+
+    const accessToken = generateAccessToken({ id: userId, role: role, role_id: role_id });
     const refreshToken = generateRefreshToken({ id: userId });
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
     await repo.saveRefreshToken(userId, refreshToken, expiresAt);
 
-    return { userId, accessToken, refreshToken };
+    return { 
+        userId, 
+        accessToken, 
+        refreshToken,
+        message: role === "teacher" ? "Registration successful. Please wait for admin validation." : "Registration successful."
+    };
 };
 
 export const login = async ({ email, password }) => {
     const user = await repo.findByEmail(email);
     if (!user) throw new Error("User not found");
 
-    const valid = await comparePassword(password, user.password_hash);
-    if (!valid) throw new Error("Invalid password");
+    if (user.is_deleted || !user.is_active || !user.is_validated) {
+        await logActivity(user.id, "Failed login attempt: Account status restricted");
+        if (user.is_deleted) {
+            throw new Error("Account has been deleted");
+        }
 
-    const accessToken = generateAccessToken({ id: user.id, role_id: user.role_id });
+        if (!user.is_active) {
+            throw new Error("Account is inactive. Please contact support.");
+        }
+
+        if (!user.is_validated) {
+            throw new Error("Account pending admin validation.");
+        }
+    }
+
+    const valid = await comparePassword(password, user.password_hash);
+    if (!valid) {
+        await logActivity(user.id, "Failed login attempt: Invalid password");
+        throw new Error("Invalid password");
+    }
+
+    const accessToken = generateAccessToken({ id: user.id, role: user.role_name, role_id: user.role_id });
     const refreshToken = generateRefreshToken({ id: user.id });
 
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
     await repo.saveRefreshToken(user.id, refreshToken, expiresAt);
 
-    return { userId: user.id, accessToken, refreshToken };
+    await logActivity(user.id, "User logged in successfully");
+
+    return { 
+        userId: user.id, 
+        role: user.role_name,
+        accessToken, 
+        refreshToken 
+    };
 };
 
 export const refreshAccessToken = async (refreshToken) => {
@@ -60,7 +102,11 @@ export const refreshAccessToken = async (refreshToken) => {
     const user = await repo.findById(decoded.id);
     if (!user) throw new Error("User no longer exists");
 
-    const newAccessToken = generateAccessToken({ id: user.id, role_id: user.role_id });
+    if (user.is_deleted || !user.is_active || !user.is_validated) {
+        throw new Error("User account is no longer valid or active");
+    }
+
+    const newAccessToken = generateAccessToken({ id: user.id, role: user.role_name, role_id: user.role_id });
 
     return { accessToken: newAccessToken };
 };

@@ -2,6 +2,7 @@ import { Router } from "express";
 import * as controller from "./submission.controller.js";
 import { authenticate } from "../../middlewares/auth.middleware.js";
 import { authorizePermission } from "../../middlewares/permission.middleware.js";
+import upload from "../../middlewares/upload.middleware.js";
 import { validateRequest } from "../../core/middlewares/validate.middleware.js";
 import { submissionSchema } from "./submission.validation.js";
 
@@ -25,20 +26,21 @@ const router = Router();
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
- *             required: [assignment_id, file_path]
+ *             required: [assignment_id, file]
  *             properties:
  *               assignment_id:
  *                 type: integer
- *               file_path:
+ *               file:
  *                 type: string
+ *                 format: binary
  *     responses:
  *       201:
  *         description: Assignment submitted
  */
-router.post("/", authenticate, authorizePermission("assignment.submit"), validateRequest(submissionSchema), controller.submitAssignment);
+router.post("/", authenticate, authorizePermission("assignment.submit"), upload.single("file"), controller.submitAssignment);
 
 /**
  * @swagger

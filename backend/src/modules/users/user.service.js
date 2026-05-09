@@ -23,3 +23,7 @@ export const uploadAvatar = async (userId, file) => {
 
     return avatarUrl;
 };
+
+export const getAcademicRecord = async (userId) => {
+    return await repo.getAcademicRecord(userId);
+};

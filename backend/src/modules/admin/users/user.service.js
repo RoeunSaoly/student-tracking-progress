@@ -26,3 +26,23 @@ export const deleteUser = async (id, adminId) => {
     await repo.softDeleteUser(id);
     return { message: "User deleted successfully" };
 };
+
+export const validateTeacher = async (id, isValidated) => {
+    const user = await repo.findUserById(id);
+    if (!user) throw new Error("User not found");
+    if (user.role_name !== "teacher") throw new Error("User is not a teacher");
+
+    await repo.updateUser(id, { is_validated: isValidated });
+    return { 
+        message: isValidated ? "Teacher account validated successfully" : "Teacher account invalidated" 
+    };
+};
+
+export const getStudentDetails = async (id) => {
+    const user = await repo.findUserById(id);
+    if (!user) throw new Error("Student not found");
+    if (user.role_name !== "student") throw new Error("User is not a student");
+
+    const record = await repo.getStudentAcademicRecord(id);
+    return { ...user, ...record };
+};
