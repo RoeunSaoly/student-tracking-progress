@@ -9,5 +9,3 @@ export {
   repository,
   routes
 };
-
-export default routes;
