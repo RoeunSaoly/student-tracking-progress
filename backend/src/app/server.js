@@ -1,18 +1,29 @@
-import app from "./app.js";
 import dotenv from "dotenv";
-import { initModels } from "../database/index.js";
+dotenv.config({ override: true });
 
-dotenv.config();
+import app from "./app.js";
+// database init removed
 
-const port = process.env.PORT || 5000;
+const port = process.env.PORT || 5002;
+console.log(`📡 Attempting to start server on port: ${port}`);
 
-// Initialize Database Models and start server
-try {
-    await initModels();
-    app.listen(port, () => {
-        console.log(`🚀 Server running on http://localhost:${port}`);
-    });
-} catch (error) {
-    console.error("❌ Failed to initialize database:", error);
-    process.exit(1);
-}
+const startServer = async () => {
+    try {
+        const server = app.listen(port, () => {
+            console.log(`🚀 Server running on http://localhost:${port}`);
+        });
+
+        server.on('error', (error) => {
+            console.error("❌ Server error:", error);
+        });
+
+        server.on('close', () => {
+            console.log("⚠️ Server closed");
+        });
+    } catch (error) {
+        console.error("❌ Failed to initialize:", error);
+        process.exit(1);
+    }
+};
+
+startServer();

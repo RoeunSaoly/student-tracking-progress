@@ -1,4 +1,4 @@
-import * as permissionService from "../../modules/permissions/service/index.js";
+import * as permissionService from "../../modules/permissions/service/permission.service.js";
 
 export const authorizePermission = (permission) => {
     return async (req, res, next) => {

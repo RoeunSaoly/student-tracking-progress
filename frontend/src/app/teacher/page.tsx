@@ -1,11 +1,5 @@
-import Dashboard from '../components/teachers/Dashborad';
-import Footers from '../components/Footer/page';
+import TeacherDashboard from '@/components/features/dashboard/TeacherDashboard';
 
-export default function RootLayout() {
-  return (
-    <div className='bg-gray-50'>
-      <Dashboard/>
-      <Footers/>
-    </div>
-  );
+export default function TeacherPage() {
+  return <TeacherDashboard />;
 }

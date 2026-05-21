@@ -1,16 +1,17 @@
 import express from 'express';
-import authRoutes from '../modules/auth/routes/index.js';
-import userRoutes from '../modules/users/routes/index.js';
-import classRoutes from '../modules/classes/routes/index.js';
-import assignmentRoutes from '../modules/assignments/routes/index.js';
-import submissionRoutes from '../modules/submissions/routes/index.js';
-import gradeRoutes from '../modules/grades/routes/index.js';
-import dashboardRoutes from '../modules/dashboard/routes/index.js';
-import materialRoutes from '../modules/materials/routes/index.js';
-import goalRoutes from '../modules/goals/routes/index.js';
-import messageRoutes from '../modules/messages/routes/index.js';
-import studentRoutes from '../modules/students/routes/index.js';
+import authRoutes from '../modules/auth/routes/auth.routes.js';
+import userRoutes from '../modules/users/routes/user.routes.js';
+import classRoutes from '../modules/classes/routes/class.routes.js';
+import assignmentRoutes from '../modules/assignments/routes/assignment.routes.js';
+import submissionRoutes from '../modules/submissions/routes/submission.routes.js';
+import gradeRoutes from '../modules/grades/routes/grade.routes.js';
+import dashboardRoutes from '../modules/dashboard/routes/dashboard.routes.js';
+import materialRoutes from '../modules/materials/routes/material.routes.js';
+import goalRoutes from '../modules/goals/routes/goal.routes.js';
+import messageRoutes from '../modules/messages/routes/message.routes.js';
+import studentRoutes from '../modules/students/routes/student.routes.js';
 import adminRoutes from '../modules/admin/index.js';
+import notificationRoutes from '../modules/notifications/routes/notification.routes.js';
 
 const router = express.Router();
 
@@ -26,5 +27,6 @@ router.use('/goals', goalRoutes);
 router.use('/messages', messageRoutes);
 router.use('/students', studentRoutes);
 router.use('/admin', adminRoutes);
+router.use('/notifications', notificationRoutes);
 
 export default router;

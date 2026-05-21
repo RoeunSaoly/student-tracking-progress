@@ -1,7 +1,7 @@
-import * as controller from './controller/index.js';
-import * as service from './service/index.js';
-import * as repository from './repository/index.js';
-import routes from './routes/index.js';
+import * as controller from './controller/grade.controller.js';
+import * as service from './service/grade.service.js';
+import * as repository from './repository/grade.repository.js';
+import routes from './routes/grade.routes.js';
 
 export {
   controller,

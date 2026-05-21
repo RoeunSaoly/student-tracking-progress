@@ -58,7 +58,7 @@ export const getAcademicRecord = async (studentId) => {
     );
 
     const [goals] = await db.query(
-        `SELECT * FROM goals WHERE student_id = ?`,
+        `SELECT *, IF(status = 'completed', 1, 0) as is_completed FROM goals WHERE student_id = ?`,
         [studentId]
     );
 
