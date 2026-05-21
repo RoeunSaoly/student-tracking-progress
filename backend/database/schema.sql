@@ -132,7 +132,7 @@ CREATE TABLE submissions (
     assignment_id INT NOT NULL,
     student_id INT NOT NULL,
     file_path VARCHAR(500),
-    status ENUM('submitted','late','pending') DEFAULT 'pending',
+    status ENUM('submitted','late','pending','graded') DEFAULT 'pending',
     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     UNIQUE (assignment_id, student_id),

@@ -1,7 +1,7 @@
-import * as controller from './controller/index.js';
-import * as service from './service/index.js';
-import * as repository from './repository/index.js';
-import routes from './routes/index.js';
+import * as controller from './controller/material.controller.js';
+import * as service from './service/material.service.js';
+import * as repository from './repository/material.repository.js';
+import routes from './routes/material.routes.js';
 
 export {
   controller,

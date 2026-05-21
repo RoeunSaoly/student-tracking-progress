@@ -1,17 +1,19 @@
 import * as repo from "../repository/index.js";
 
-export const getAllUsers = async () => {
-    return await repo.findAll();
-};
-
-export const getUserById = async (id) => {
+export const getProfile = async (id) => {
     return await repo.findById(id);
 };
 
-export const updateUser = async (id, data) => {
-    return await repo.update(id, data);
+export const updateProfile = async (id, data) => {
+    return await repo.updateProfile(id, data);
 };
 
-export const deleteUser = async (id) => {
-    return await repo.delete(id);
+export const uploadAvatar = async (id, file) => {
+    const avatarUrl = `/uploads/${file.filename}`;
+    await repo.updateAvatar(id, avatarUrl);
+    return avatarUrl;
+};
+
+export const getAcademicRecord = async (studentId) => {
+    return await repo.getAcademicRecord(studentId);
 };

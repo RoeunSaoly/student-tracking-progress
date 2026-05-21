@@ -18,10 +18,13 @@ export const errorHandler = (err, req, res, next) => {
     }));
   }
 
-  // Handle JWT Errors
-  if (err.name === 'JsonWebTokenError') {
+  // Handle common auth errors
+  if (message.includes('not found') || message.includes('Invalid password') || message.includes('Invalid token')) {
     statusCode = 401;
-    message = 'Invalid token. Please log in again.';
+  }
+  
+  if (message.includes('pending admin validation') || message.includes('Account is inactive') || message.includes('Account has been deleted')) {
+    statusCode = 403;
   }
 
   res.status(statusCode).json({

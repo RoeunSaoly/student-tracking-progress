@@ -14,8 +14,8 @@ import {
   Bell
 } from 'lucide-react'
 
-import Header from '../components/Header/page'
-import Footer from '../components/Footer/page'
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
 import { div } from 'framer-motion/client'
 
 export default function AboutPage() {
@@ -102,7 +102,7 @@ export default function AboutPage() {
         
         {/* Header */}
         <header className="mb-12 text-center">
-          <div className="inline-block p-3 bg-white rounded-2xl shadow-sm border mb-6">
+          <div className="inline-block p-3 bg-white rounded-md shadow-sm border mb-6">
             <User className="w-12 h-12 text-blue-600" />
           </div>
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-3">
@@ -122,10 +122,10 @@ export default function AboutPage() {
             return (
               <div
                 key={index}
-                className={`${colors.bg} border ${colors.border} rounded-2xl p-6 shadow-sm transition-all duration-300 hover:shadow-md`}
+                className={`${colors.bg} border ${colors.border} rounded-md p-6 shadow-sm transition-all duration-300 hover:shadow-md`}
               >
                 <div className="flex items-center gap-4 mb-5">
-                  <div className={`p-3 rounded-xl ${colors.icon}`}>
+                  <div className={`p-3 rounded-md ${colors.icon}`}>
                     <section.icon className="w-6 h-6" />
                   </div>
                   <h2 className={`text-2xl font-bold ${colors.text}`}>
@@ -169,7 +169,7 @@ export default function AboutPage() {
         </div>
 
         {/* Key Features She Needs */}
-        <div className="bg-white rounded-2xl shadow-lg border p-8 mb-12">
+        <div className="bg-white rounded-md shadow-lg border p-8 mb-12">
           <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">
             Ideal Solution Features for Jane
           </h2>
@@ -227,9 +227,9 @@ export default function AboutPage() {
             ].map((feature, index) => (
               <div
                 key={index}
-                className="border rounded-xl p-5 hover:shadow-md transition-shadow duration-200"
+                className="border rounded-md p-5 hover:shadow-md transition-shadow duration-200"
               >
-                <div className={`inline-flex p-3 rounded-lg mb-4 ${feature.color}`}>
+                <div className={`inline-flex p-3 rounded-md mb-4 ${feature.color}`}>
                   <feature.icon className="w-6 h-6" />
                 </div>
                 <h3 className="font-bold text-gray-800 mb-2">{feature.title}</h3>
@@ -240,7 +240,7 @@ export default function AboutPage() {
         </div>
 
         {/* User Persona Summary */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-8 text-white">
+        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-md p-8 text-white">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="text-3xl font-bold mb-4">User Persona Summary</h2>
             <p className="text-lg mb-6 opacity-90">

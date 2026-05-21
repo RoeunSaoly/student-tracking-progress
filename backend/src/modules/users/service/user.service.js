@@ -1,30 +1,24 @@
-import userRepository from '../repository/user.repository.js';
-import db from '../../../database/index.js';
+import * as userRepository from '../repository/user.repository.js';
 import bcrypt from 'bcryptjs';
+import { v4 as uuidv4 } from 'uuid';
 
 class UserService {
   async registerUser(userData) {
-    // Example of using transactions for multi-model operations
-    const transaction = await db.sequelize.transaction();
-    
     try {
       const hashedPassword = await bcrypt.hash(userData.password, 10);
+      const id = uuidv4();
       
       const user = await userRepository.create({
         ...userData,
+        id,
         password: hashedPassword
-      }, { transaction });
+      });
 
       // You could create other related records here...
       // Example: await profileRepository.create({ userId: user.id }, { transaction });
-
-      await transaction.commit();
       
-      // Remove password from returned object
-      const { password, ...userWithoutPassword } = user.toJSON();
-      return userWithoutPassword;
+      return user;
     } catch (error) {
-      await transaction.rollback();
       throw error;
     }
   }
@@ -33,8 +27,7 @@ class UserService {
     const { limit, offset } = pagination;
     const data = await userRepository.findAndCountAll({
       limit,
-      offset,
-      attributes: { exclude: ['password'] }
+      offset
     });
     return data;
   }
