@@ -46,7 +46,7 @@ export const getStudentGoalStats = async (studentId) => {
   const [rows] = await db.query(
     `SELECT 
       COUNT(*) as total_goals,
-      SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_goals
+      SUM(CASE WHEN is_completed = TRUE THEN 1 ELSE 0 END) as completed_goals
      FROM goals
      WHERE student_id = ?`,
     [studentId]
@@ -231,7 +231,7 @@ export const getStudentRecentActivities = async (studentId, limit = 10) => {
 
 export const getStudentGoals = async (studentId) => {
   const [rows] = await db.query(
-    "SELECT *, IF(status = 'completed', 1, 0) as is_completed FROM goals WHERE student_id = ? ORDER BY created_at DESC",
+    "SELECT * FROM goals WHERE student_id = ? ORDER BY created_at DESC",
     [studentId]
   );
   return rows;

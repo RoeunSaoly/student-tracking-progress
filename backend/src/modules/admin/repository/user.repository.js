@@ -2,7 +2,7 @@ import db from "../../../config/db.js";
 
 export const findAllUsers = async ({ search, role, status, page = 1, limit = 10 }) => {
     let query = `
-        SELECT u.id, u.username, u.email, u.is_active, u.is_validated, u.is_deleted, u.created_at,
+        SELECT u.id, u.username, u.email, u.is_active, u.is_validated, u.is_deleted, u.status, u.last_login_at, u.created_at,
                r.name as role_name
         FROM users u
         JOIN roles r ON u.role_id = r.id
@@ -20,9 +20,9 @@ export const findAllUsers = async ({ search, role, status, page = 1, limit = 10 
         params.push(role);
     }
 
-    if (status !== undefined) {
-        query += ` AND u.is_active = ?`;
-        params.push(status === 'active' ? 1 : 0);
+    if (status !== undefined && status !== '') {
+        query += ` AND u.status = ?`;
+        params.push(status);
     }
 
     query += ` ORDER BY u.created_at DESC LIMIT ? OFFSET ?`;
@@ -56,6 +56,20 @@ export const updateUser = async (id, data) => {
 
 export const softDeleteUser = async (id) => {
     await db.query(`UPDATE users SET is_deleted = TRUE WHERE id = ?`, [id]);
+};
+
+export const bulkActionUsers = async (userIds, action, data = null) => {
+    if (!userIds || userIds.length === 0) return;
+    
+    const placeholders = userIds.map(() => '?').join(',');
+    
+    if (action === 'delete') {
+        await db.query(`UPDATE users SET is_deleted = TRUE WHERE id IN (${placeholders})`, userIds);
+    } else if (action === 'update_status' && data?.status) {
+        await db.query(`UPDATE users SET status = ? WHERE id IN (${placeholders})`, [data.status, ...userIds]);
+    } else if (action === 'update_role' && data?.role_id) {
+        await db.query(`UPDATE users SET role_id = ? WHERE id IN (${placeholders})`, [data.role_id, ...userIds]);
+    }
 };
 
 export const getStudentAcademicRecord = async (studentId) => {

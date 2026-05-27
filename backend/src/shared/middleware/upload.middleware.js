@@ -24,4 +24,13 @@ const upload = createUploader("uploads/avatars", "avatar");
 // Named export: submission uploader
 export const submissionUpload = createUploader("uploads/submissions", "submission");
 
+// Named export: material uploader
+export const materialUpload = createUploader("uploads/materials", "material");
+
+// Named export: message media uploader
+export const messageUpload = createUploader("uploads/messages", "message");
+
+// Named export: document uploader for verifications
+export const documentUpload = createUploader("uploads/documents", "document");
+
 export default upload;

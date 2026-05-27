@@ -17,10 +17,12 @@ import {
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { assignmentService, Assignment, Submission } from '@/services/assignmentService';
 import { useAuth } from '@/context/AuthContext';
+import { useNavItems } from '@/hooks/useNavItems';
 import DialogModal from '@/components/ui/DialogModal';
 import Link from 'next/link';
 
 const AssignmentDetail = ({ id }: { id: string }) => {
+  const navItems = useNavItems();
   const { user } = useAuth();
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
@@ -33,13 +35,6 @@ const AssignmentDetail = ({ id }: { id: string }) => {
   const [dialog, setDialog] = useState<{ open: boolean; type: 'success' | 'error'; title: string; message: string }>({
     open: false, type: 'error', title: '', message: ''
   });
-
-  const navItems = [
-    { name: 'Dashboard', href: '/student', icon: HomeIcon },
-    { name: 'My Classes', href: '/student/myclasses', icon: BookOpenIcon },
-    { name: 'Assignments', href: '/student/assignments', icon: ClipboardIcon },
-    { name: 'Messages', href: '/student/messages', icon: ChatBubbleLeftRightIcon },
-  ];
 
   useEffect(() => {
     fetchData();

@@ -2,9 +2,10 @@ import db from "../../../config/db.js";
 
 export const findByEmail = async (email) => {
     const [rows] = await db.query(
-        `SELECT u.*, r.name as role_name
+        `SELECT u.*, r.name as role_name, p.avatar_url, p.first_name, p.last_name
          FROM users u
          JOIN roles r ON u.role_id = r.id
+         LEFT JOIN user_profiles p ON u.id = p.user_id
          WHERE u.email = ?`,
         [email]
     );
@@ -59,4 +60,14 @@ export const revokeRefreshToken = async (token) => {
         "UPDATE refresh_tokens SET revoked = TRUE WHERE token = ?",
         [token]
     );
+};
+
+export const findAdminUsers = async () => {
+    const [rows] = await db.query(
+        `SELECT u.id
+         FROM users u
+         JOIN roles r ON u.role_id = r.id
+         WHERE r.name = 'admin' AND u.is_deleted = FALSE`
+    );
+    return rows;
 };

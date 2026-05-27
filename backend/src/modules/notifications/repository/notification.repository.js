@@ -1,32 +1,11 @@
 import db from "../../../config/db.js";
 
-// Auto-initialize the notifications table on startup
-const initTable = async () => {
-  try {
-    await db.query(`
-      CREATE TABLE IF NOT EXISTS notifications (
-        id INT AUTO_INCREMENT PRIMARY KEY,
-        user_id INT NOT NULL,
-        title VARCHAR(255) NOT NULL,
-        message TEXT NOT NULL,
-        type VARCHAR(50) NOT NULL,
-        is_read BOOLEAN DEFAULT FALSE,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-      )
-    `);
-    console.log("🔔 Notifications database table initialized");
-  } catch (err) {
-    console.error("❌ Failed to initialize notifications table:", err.message);
-  }
-};
 
-initTable();
 
-export const createNotification = async (userId, { title, message, type }) => {
+export const createNotification = async (userId, { title, message, type, link = null }) => {
   const [result] = await db.query(
-    `INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)`,
-    [userId, title, message, type]
+    `INSERT INTO notifications (user_id, title, message, type, link) VALUES (?, ?, ?, ?, ?)`,
+    [userId, title, message, type, link]
   );
   return result.insertId;
 };

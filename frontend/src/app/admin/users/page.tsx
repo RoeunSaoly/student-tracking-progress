@@ -81,6 +81,7 @@ export default function UserManagementPage() {
   // Data lists
   const [users, setUsers] = useState<User[]>([]);
   const [pendingTeachers, setPendingTeachers] = useState<TeacherPending[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
   
   // Loading & Error states
   const [loading, setLoading] = useState(true);
@@ -137,6 +138,7 @@ export default function UserManagementPage() {
 
       const response = await api.get('/admin/users', { params });
       setUsers(response.data);
+      setSelectedUserIds([]);
       setHasMore(response.data.length === 10);
       setError(null);
     } catch (err: any) {
@@ -187,7 +189,7 @@ export default function UserManagementPage() {
     setDialogConfig({
       isOpen: true,
       title: 'Reject Registration',
-      message: 'Are you sure you want to reject and delete this registration request?',
+      message: 'Are you sure you want to reject this request? The user will be reverted to a standard student account.',
       type: 'confirm',
       confirmText: 'Reject Request',
       onConfirm: async () => {
@@ -195,7 +197,7 @@ export default function UserManagementPage() {
           setActioningId(id);
           setError(null);
           const response = await api.put(`/admin/teachers/${id}/reject`);
-          setSuccessMessage(response.data.message || 'Teacher request rejected and removed.');
+          setSuccessMessage(response.data.message || 'Teacher request rejected and user reverted to student.');
           setPendingTeachers(prev => prev.filter(t => t.id !== id));
           setTimeout(() => setSuccessMessage(null), 4000);
         } catch (err: any) {
@@ -257,6 +259,35 @@ export default function UserManagementPage() {
       }
     });
   };
+
+  // Bulk Actions
+  const handleBulkAction = async (action: string) => {
+    if (selectedUserIds.length === 0) return;
+    
+    setDialogConfig({
+      isOpen: true,
+      title: `Confirm Bulk ${action}`,
+      message: `Are you sure you want to apply this action to ${selectedUserIds.length} users?`,
+      type: 'confirm',
+      confirmText: 'Confirm Bulk Action',
+      onConfirm: async () => {
+        try {
+          setLoading(true);
+          const data = action === 'suspend' ? { status: 'suspended' } : action === 'activate' ? { status: 'active' } : null;
+          const apiAction = action === 'delete' ? 'delete' : 'update_status';
+          await api.post('/admin/users/bulk-action', { userIds: selectedUserIds, action: apiAction, data });
+          setSuccessMessage(`Bulk action applied successfully!`);
+          fetchUsers(); // Refresh the list
+          setTimeout(() => setSuccessMessage(null), 4000);
+        } catch (err: any) {
+          setError(err.response?.data?.message || 'Failed to perform bulk action');
+        } finally {
+          setLoading(false);
+        }
+      }
+    });
+  };
+
 
   // Open Edit modal
   const handleOpenEdit = (user: User) => {
@@ -441,6 +472,27 @@ export default function UserManagementPage() {
                 </div>
               </div>
 
+              {/* Bulk Actions (Only visible if users are selected) */}
+              {selectedUserIds.length > 0 && (
+                <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-100 rounded-md">
+                  <span className="text-xs font-bold text-blue-700">{selectedUserIds.length} Selected</span>
+                  <select 
+                    onChange={(e) => {
+                      if (e.target.value) {
+                        handleBulkAction(e.target.value);
+                        e.target.value = '';
+                      }
+                    }}
+                    className="bg-white border border-blue-200 text-xs font-bold text-blue-700 px-3 py-1 rounded cursor-pointer outline-none"
+                  >
+                    <option value="">Bulk Actions...</option>
+                    <option value="activate">Set Active</option>
+                    <option value="suspend">Suspend Users</option>
+                    <option value="delete">Delete Users</option>
+                  </select>
+                </div>
+              )}
+
             </div>
 
             {/* Users Table */}
@@ -449,6 +501,17 @@ export default function UserManagementPage() {
                 <table className="w-full border-collapse text-left">
                   <thead>
                     <tr className="bg-gray-50/50 border-b border-gray-100 text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                      <th className="px-6 py-4 w-12">
+                        <input 
+                          type="checkbox" 
+                          checked={users.length > 0 && selectedUserIds.length === users.length}
+                          onChange={(e) => {
+                            if (e.target.checked) setSelectedUserIds(users.map(u => u.id));
+                            else setSelectedUserIds([]);
+                          }}
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                      </th>
                       <th className="px-6 py-4">User Details</th>
                       <th className="px-6 py-4">System Role</th>
                       <th className="px-6 py-4">Validation Status</th>
@@ -487,7 +550,18 @@ export default function UserManagementPage() {
                       </tr>
                     ) : (
                       users.map((user) => (
-                        <tr key={user.id} className="hover:bg-blue-50/5 transition-all group">
+                        <tr key={user.id} className={`hover:bg-blue-50/5 transition-all group ${selectedUserIds.includes(user.id) ? 'bg-blue-50/20' : ''}`}>
+                          <td className="px-6 py-4">
+                            <input 
+                              type="checkbox" 
+                              checked={selectedUserIds.includes(user.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) setSelectedUserIds(prev => [...prev, user.id]);
+                                else setSelectedUserIds(prev => prev.filter(id => id !== user.id));
+                              }}
+                              className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                          </td>
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
                               <div className="h-10 w-10 bg-gradient-to-tr from-blue-500/10 to-indigo-500/10 text-blue-600 rounded-md flex items-center justify-center font-bold text-sm">

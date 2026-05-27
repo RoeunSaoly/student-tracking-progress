@@ -6,6 +6,7 @@ import {
     verifyRefreshToken,
 } from "../../../shared/utils/jwt.js";
 import { logActivity } from "../../logs/service/log.service.js";
+import { addNotification } from "../../notifications/service/notification.service.js";
 
 export const register = async (data) => {
     const { email, password, username, role = "student" } = data;
@@ -35,12 +36,28 @@ export const register = async (data) => {
 
     await repo.createProfile(userId);
 
-    const accessToken = generateAccessToken({ id: userId, role: role, role_id: role_id });
-    const refreshToken = generateRefreshToken({ id: userId });
+    let accessToken = null;
+    let refreshToken = null;
 
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-    await repo.saveRefreshToken(userId, refreshToken, expiresAt);
+    if (is_validated) {
+        accessToken = generateAccessToken({ id: userId, role: role, role_id: role_id });
+        refreshToken = generateRefreshToken({ id: userId });
+
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 7);
+        await repo.saveRefreshToken(userId, refreshToken, expiresAt);
+    } else if (role === "teacher") {
+        // Notify all admins about the new pending teacher
+        const admins = await repo.findAdminUsers();
+        for (const admin of admins) {
+            await addNotification(admin.id, {
+                title: "New Teacher Registration",
+                message: `Teacher ${username} (${email}) has registered and is pending approval.`,
+                type: "system",
+                link: "/admin/verification"
+            });
+        }
+    }
 
     return { 
         userId, 
@@ -87,6 +104,8 @@ export const login = async ({ email, password }) => {
     return { 
         userId: user.id, 
         role: user.role_name,
+        name: user.first_name || user.username,
+        avatar_url: user.avatar_url,
         accessToken, 
         refreshToken 
     };

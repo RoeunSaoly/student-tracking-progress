@@ -11,9 +11,14 @@ import {
   PlusIcon,
   UserMinusIcon,
   DocumentArrowDownIcon,
+  EyeIcon,
   TrashIcon
 } from '@heroicons/react/24/outline';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import InviteStudentModal from '@/components/features/classes/InviteStudentModal';
+import CreateAssignmentModal from '@/components/features/assignments/CreateAssignmentModal';
+import SubmitAssignmentModal from '@/components/features/assignments/SubmitAssignmentModal';
+import UploadMaterialModal from '@/components/features/classes/UploadMaterialModal';
 import { useNavItems } from '@/hooks/useNavItems';
 import api from '@/lib/axios';
 import { useAuth } from '@/context/AuthContext';
@@ -24,11 +29,41 @@ export default function ClassDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const { user } = useAuth();
+  const navItems = useNavItems();
   const [activeTab, setActiveTab] = useState<TabType>('students');
   const [classData, setClassData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [tabData, setTabData] = useState<any[]>([]);
   const [tabLoading, setTabLoading] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [isCreateAssignmentOpen, setIsCreateAssignmentOpen] = useState(false);
+  const [isUploadMaterialOpen, setIsUploadMaterialOpen] = useState(false);
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
+  const [selectedAssignmentTitle, setSelectedAssignmentTitle] = useState<string>('');
+
+  const getAssetUrl = (path: string) => {
+    if (!path) return '';
+    if (path.startsWith('http')) return path;
+    const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || 'http://127.0.0.1:5002';
+    return `${baseUrl}${path.startsWith('/') ? '' : '/'}${path}`;
+  };
+
+  const forceDownload = async (url: string, filename: string) => {
+    try {
+      const response = await fetch(url);
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(blobUrl);
+    } catch (err) {
+      window.open(url, '_blank');
+    }
+  };
 
   const fetchClassDetails = useCallback(async () => {
     try {
@@ -78,8 +113,6 @@ export default function ClassDetailPage() {
     );
   }
 
-  const navItems = useNavItems();
-
   return (
     <DashboardLayout navItems={navItems} title={classData?.name || 'Class Details'}>
       <button 
@@ -127,7 +160,12 @@ export default function ClassDetailPage() {
         {(['students', 'assignments', 'materials'] as TabType[]).map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab)}
+            onClick={() => {
+              if (activeTab !== tab) {
+                setTabLoading(true);
+                setActiveTab(tab);
+              }
+            }}
             className={`px-8 py-3 rounded-md font-bold text-sm transition-all duration-300 flex items-center gap-2
               ${activeTab === tab ? 'bg-gray-900 text-white shadow-lg' : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'}`}
           >
@@ -152,7 +190,10 @@ export default function ClassDetailPage() {
                 <div className="p-6 border-b border-gray-50 flex justify-between items-center">
                   <h3 className="font-bold text-gray-800">Enrolled Students ({tabData.length})</h3>
                   {user?.role === 'teacher' && (
-                    <button className="text-blue-600 text-sm font-bold hover:underline flex items-center gap-1">
+                    <button 
+                      onClick={() => setIsInviteModalOpen(true)}
+                      className="text-blue-600 text-sm font-bold hover:underline flex items-center gap-1"
+                    >
                       <PlusIcon className="h-4 w-4" />
                       Invite Student
                     </button>
@@ -173,11 +214,11 @@ export default function ClassDetailPage() {
                         <tr key={student.id} className="group hover:bg-gray-50/50 transition-colors">
                           <td className="px-6 py-4">
                             <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
-                                {student.username.charAt(0)}
+                              <div className="h-10 w-10 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold uppercase">
+                                {student.username?.charAt(0) || student.first_name?.charAt(0) || 'U'}
                               </div>
                               <div>
-                                <p className="font-bold text-gray-800">{student.first_name} {student.last_name}</p>
+                                <p className="font-bold text-gray-800">{(student.first_name || '') + ' ' + (student.last_name || '') || student.username}</p>
                                 <p className="text-xs text-gray-400">{student.email}</p>
                               </div>
                             </div>
@@ -214,7 +255,10 @@ export default function ClassDetailPage() {
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-xl font-bold text-gray-800">Assignments</h3>
                   {user?.role === 'teacher' && (
-                    <button className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-md font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100">
+                    <button 
+                      onClick={() => setIsCreateAssignmentOpen(true)}
+                      className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-md font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
+                    >
                       <PlusIcon className="h-5 w-5" />
                       Create Assignment
                     </button>
@@ -235,7 +279,18 @@ export default function ClassDetailPage() {
                         </div>
                       </div>
                     </div>
-                    <button className="px-6 py-2 rounded-md bg-gray-50 text-gray-600 text-sm font-bold hover:bg-gray-900 hover:text-white transition-all">
+                    <button 
+                      onClick={() => {
+                        if (user?.role === 'student') {
+                          setSelectedAssignmentId(assignment.id);
+                          setSelectedAssignmentTitle(assignment.title);
+                        } else {
+                          // Handle teacher "Submissions" logic (e.g. redirect to grading page)
+                          router.push(`/assignments/${assignment.id}`);
+                        }
+                      }}
+                      className="px-6 py-2 rounded-md bg-gray-50 text-gray-600 text-sm font-bold hover:bg-gray-900 hover:text-white transition-all"
+                    >
                       {user?.role === 'teacher' ? 'Submissions' : 'Submit'}
                     </button>
                   </div>
@@ -253,7 +308,10 @@ export default function ClassDetailPage() {
                 <div className="md:col-span-2 lg:col-span-3 flex justify-between items-center mb-4">
                   <h3 className="text-xl font-bold text-gray-800">Learning Materials</h3>
                   {user?.role === 'teacher' && (
-                    <button className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-md font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
+                    <button 
+                      onClick={() => setIsUploadMaterialOpen(true)}
+                      className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-md font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
+                    >
                       <PlusIcon className="h-5 w-5" />
                       Upload Material
                     </button>
@@ -273,10 +331,25 @@ export default function ClassDetailPage() {
                     </div>
                     <h4 className="font-bold text-gray-800 mb-2 truncate group-hover:text-indigo-600 transition-colors">{material.title}</h4>
                     <p className="text-xs text-gray-400 font-medium mb-6 line-clamp-2">{material.description || 'No description provided.'}</p>
-                    <button className="w-full flex items-center justify-center gap-2 py-3 rounded-md bg-gray-50 text-indigo-600 font-bold text-xs uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all">
-                      <DocumentArrowDownIcon className="h-4 w-4" />
-                      Download File
-                    </button>
+                    <div className="flex gap-2 mt-auto">
+                      <button 
+                        onClick={() => window.open(getAssetUrl(material.file_url), '_blank')}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md bg-indigo-50 text-indigo-600 font-bold text-xs uppercase tracking-widest hover:bg-indigo-100 transition-all"
+                      >
+                        <EyeIcon className="h-4 w-4" />
+                        View
+                      </button>
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          forceDownload(getAssetUrl(material.file_url), material.title || 'material');
+                        }}
+                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md bg-gray-50 text-gray-600 font-bold text-xs uppercase tracking-widest hover:bg-gray-100 transition-all border border-gray-200"
+                      >
+                        <DocumentArrowDownIcon className="h-4 w-4" />
+                        Save
+                      </button>
+                    </div>
                   </div>
                 )) : (
                   <div className="md:col-span-2 lg:col-span-3 bg-white rounded-md p-20 text-center border border-dashed border-gray-200">
@@ -289,6 +362,46 @@ export default function ClassDetailPage() {
           </div>
         )}
       </div>
+
+      {classData && (
+        <InviteStudentModal
+          isOpen={isInviteModalOpen}
+          onClose={() => setIsInviteModalOpen(false)}
+          classCode={classData.code}
+          className={classData.name}
+        />
+      )}
+
+      {user?.role === 'teacher' && (
+        <CreateAssignmentModal
+          isOpen={isCreateAssignmentOpen}
+          onClose={() => setIsCreateAssignmentOpen(false)}
+          onSuccess={() => fetchTabData('assignments')}
+          defaultClassId={id as string}
+        />
+      )}
+
+      {user?.role === 'teacher' && (
+        <UploadMaterialModal
+          isOpen={isUploadMaterialOpen}
+          onClose={() => setIsUploadMaterialOpen(false)}
+          onSuccess={() => fetchTabData('materials')}
+          classId={id as string}
+        />
+      )}
+
+      {user?.role === 'student' && selectedAssignmentId && (
+        <SubmitAssignmentModal
+          isOpen={!!selectedAssignmentId}
+          onClose={() => {
+            setSelectedAssignmentId(null);
+            setSelectedAssignmentTitle('');
+          }}
+          onSuccess={() => fetchTabData('assignments')}
+          assignmentId={selectedAssignmentId}
+          assignmentTitle={selectedAssignmentTitle}
+        />
+      )}
     </DashboardLayout>
   );
 }

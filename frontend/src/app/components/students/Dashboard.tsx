@@ -11,16 +11,12 @@ import {
   ClockIcon,
   PlusIcon,
   XMarkIcon,
-  HomeIcon,
-  BookOpenIcon,
-  ClipboardIcon,
-  ChatBubbleLeftRightIcon,
-  BellIcon,
-  TrashIcon,
   ArrowPathIcon,
-  PencilSquareIcon
+  PencilSquareIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
 import DashboardLayout from '../shared/DashboardLayout';
+import { useNavItems } from '@/hooks/useNavItems';
 import ActivityLog from '../shared/ActivityLog';
 import Link from 'next/link';
 import GoalModal from './GoalModal';
@@ -32,6 +28,7 @@ import {
 } from 'recharts';
 
 const Dashboard = () => {
+  const navItems = useNavItems();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -61,13 +58,6 @@ const Dashboard = () => {
   useEffect(() => {
     fetchDashboardData();
   }, [fetchDashboardData]);
-
-  const navItems = [
-    { name: 'Dashboard', href: '/student', icon: HomeIcon },
-    { name: 'My Classes', href: '/classes', icon: BookOpenIcon },
-    { name: 'Assignments', href: '/student/assignments', icon: ClipboardIcon },
-    { name: 'Messages', href: '/student/messages', icon: ChatBubbleLeftRightIcon },
-  ];
 
   const handleSaveGoal = async (goalData: any) => {
     try {

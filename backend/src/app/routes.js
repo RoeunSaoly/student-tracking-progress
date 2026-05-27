@@ -12,6 +12,7 @@ import messageRoutes from '../modules/messages/routes/message.routes.js';
 import studentRoutes from '../modules/students/routes/student.routes.js';
 import adminRoutes from '../modules/admin/index.js';
 import notificationRoutes from '../modules/notifications/routes/notification.routes.js';
+import teacherRequestRoutes from '../modules/teacherRequests/routes/request.routes.js';
 
 const router = express.Router();
 
@@ -28,5 +29,6 @@ router.use('/messages', messageRoutes);
 router.use('/students', studentRoutes);
 router.use('/admin', adminRoutes);
 router.use('/notifications', notificationRoutes);
+router.use('/teacher-requests', teacherRequestRoutes);
 
 export default router;

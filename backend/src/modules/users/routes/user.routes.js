@@ -109,4 +109,22 @@ router.post(
  */
 router.get("/academic-record", authenticate, userController.getAcademicRecord);
 
+/**
+ * @swagger
+ * /users/request-teacher:
+ *   post:
+ *     summary: Request to become a teacher
+ *     tags: [Profile]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Teacher role requested successfully
+ *       400:
+ *         description: Bad request
+ *       401:
+ *         description: Unauthorized
+ */
+router.post("/request-teacher", authenticate, userController.requestTeacher);
+
 export default router;

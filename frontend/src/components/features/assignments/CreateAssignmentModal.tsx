@@ -9,9 +9,10 @@ interface CreateAssignmentModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  defaultClassId?: string;
 }
 
-const CreateAssignmentModal = ({ isOpen, onClose, onSuccess }: CreateAssignmentModalProps) => {
+const CreateAssignmentModal = ({ isOpen, onClose, onSuccess, defaultClassId }: CreateAssignmentModalProps) => {
   const [loading, setLoading] = useState(false);
   const [classes, setClasses] = useState<any[]>([]);
   const [formData, setFormData] = useState({
@@ -19,7 +20,7 @@ const CreateAssignmentModal = ({ isOpen, onClose, onSuccess }: CreateAssignmentM
     description: '',
     due_date: '',
     max_score: 100,
-    class_id: ''
+    class_id: defaultClassId || ''
   });
   const [error, setError] = useState('');
 
@@ -33,7 +34,9 @@ const CreateAssignmentModal = ({ isOpen, onClose, onSuccess }: CreateAssignmentM
     try {
       const classesData = await classService.getTeacherClasses();
       setClasses(classesData);
-      if (classesData.length > 0 && !formData.class_id) {
+      if (defaultClassId) {
+        setFormData(prev => ({ ...prev, class_id: defaultClassId }));
+      } else if (classesData.length > 0 && !formData.class_id) {
         setFormData(prev => ({ ...prev, class_id: classesData[0].id }));
       }
     } catch (error) {
@@ -59,7 +62,7 @@ const CreateAssignmentModal = ({ isOpen, onClose, onSuccess }: CreateAssignmentM
         description: '',
         due_date: '',
         max_score: 100,
-        class_id: classes[0]?.id || ''
+        class_id: defaultClassId || classes[0]?.id || ''
       });
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to create assignment');
@@ -80,10 +83,11 @@ const CreateAssignmentModal = ({ isOpen, onClose, onSuccess }: CreateAssignmentM
         <div>
           <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Select Class</label>
           <select 
-            className="w-full px-5 py-4 rounded-md bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-800 font-medium"
+            className="w-full px-5 py-4 rounded-md bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-800 font-medium disabled:opacity-70 disabled:cursor-not-allowed"
             value={formData.class_id}
             onChange={(e) => setFormData({...formData, class_id: e.target.value})}
             required
+            disabled={!!defaultClassId}
           >
             <option value="" disabled>Choose a class</option>
             {classes.map(c => (

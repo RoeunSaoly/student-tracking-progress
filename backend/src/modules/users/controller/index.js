@@ -12,6 +12,7 @@ export const updateProfile = asyncHandler(async (req, res) => {
 });
 
 export const uploadAvatar = asyncHandler(async (req, res) => {
+    if (!req.file) throw new Error("No file uploaded");
     const avatar = await service.uploadAvatar(req.user.id, req.file);
     res.json({ avatar });
 });
@@ -19,4 +20,9 @@ export const uploadAvatar = asyncHandler(async (req, res) => {
 export const getAcademicRecord = asyncHandler(async (req, res) => {
     const record = await service.getAcademicRecord(req.user.id);
     res.json(record);
+});
+
+export const requestTeacher = asyncHandler(async (req, res) => {
+    const result = await service.requestTeacher(req.user.id);
+    res.json(result);
 });

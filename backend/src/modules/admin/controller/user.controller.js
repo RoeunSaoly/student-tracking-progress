@@ -24,6 +24,12 @@ export const deleteUser = asyncHandler(async (req, res) => {
     res.json(result);
 });
 
+export const bulkActionUsers = asyncHandler(async (req, res) => {
+    const { userIds, action, data } = req.body;
+    const result = await service.bulkActionUsers(userIds, action, data, req.user.id);
+    res.json(result);
+});
+
 export const validateTeacher = asyncHandler(async (req, res) => {
     const { is_validated } = req.body;
     const result = await service.validateTeacher(req.params.id, is_validated);

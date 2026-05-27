@@ -15,17 +15,13 @@ import {
   SparklesIcon
 } from '@heroicons/react/24/outline';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import { useNavItems } from '@/hooks/useNavItems';
 
 const ClassList = () => {
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [joinCode, setJoinCode] = useState('');
 
-  const navItems = [
-    { name: 'Dashboard', href: '/student', icon: HomeIcon },
-    { name: 'My Classes', href: '/student/myclasses', icon: BookOpenIcon },
-    { name: 'Assignments', href: '/student/assignments', icon: ClipboardIcon },
-    { name: 'Messages', href: '/student/messages', icon: ChatBubbleLeftRightIcon },
-  ];
+  const navItems = useNavItems();
 
   const classes = [
     {

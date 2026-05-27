@@ -5,6 +5,7 @@ import { authorizePermission } from "../../../shared/middleware/permission.middl
 const router = Router();
 
 router.get("/", authorizePermission("user.read"), controller.getUsers);
+router.post("/bulk-action", authorizePermission("user.update"), controller.bulkActionUsers);
 router.get("/:id", authorizePermission("user.read"), controller.getUserById);
 router.put("/:id", authorizePermission("user.update"), controller.updateUser);
 router.delete("/:id", authorizePermission("user.delete"), controller.deleteUser);

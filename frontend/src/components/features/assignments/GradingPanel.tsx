@@ -19,8 +19,10 @@ import Modal from '@/components/ui/Modal';
 import DialogModal from '@/components/ui/DialogModal';
 import Link from 'next/link';
 import { assignmentService, Assignment, Submission } from '../../../services/assignmentService';
+import { useNavItems } from '@/hooks/useNavItems';
 
 const GradingPanel = ({ assignmentId }: { assignmentId: string }) => {
+  const navItems = useNavItems();
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
@@ -34,14 +36,6 @@ const GradingPanel = ({ assignmentId }: { assignmentId: string }) => {
   const [dialog, setDialog] = useState<{ open: boolean; type: 'success' | 'error'; title: string; message: string }>({
     open: false, type: 'error', title: '', message: ''
   });
-
-  const navItems = [
-    { name: 'Dashboard', href: '/teacher', icon: HomeIcon },
-    { name: 'My Classes', href: '/teacher/classes', icon: BookOpenIcon },
-    { name: 'Assignments', href: '/teacher/assignments', icon: ClipboardIcon },
-    { name: 'Students', href: '/teacher/students', icon: UsersIcon },
-    { name: 'Messages', href: '/teacher/messages', icon: ChatBubbleLeftRightIcon },
-  ];
 
   useEffect(() => {
     fetchData();

@@ -4,6 +4,7 @@ import teacherRoutes from "./teacher.routes.js";
 import classRoutes from "./class.routes.js";
 import dashboardRoutes from "./dashboard.routes.js";
 import logsRoutes from "./logs.routes.js";
+import adminTeacherRequestRoutes from "../../teacherRequests/routes/admin.routes.js";
 import { authenticate } from "../../../shared/middleware/auth.middleware.js";
 import { authorizeRoles } from "../../../shared/middleware/role.middleware.js";
 
@@ -18,5 +19,6 @@ router.use("/teachers", teacherRoutes);
 router.use("/classes", classRoutes);
 router.use("/dashboard", dashboardRoutes);
 router.use("/logs", logsRoutes);
+router.use("/teacher-requests", adminTeacherRequestRoutes);
 
 export default router;

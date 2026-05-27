@@ -2,7 +2,7 @@ import { Router } from "express";
 import * as controller from "../controller/material.controller.js";
 import { authenticate } from "../../../shared/middleware/auth.middleware.js";
 import { authorizePermission } from "../../../shared/middleware/permission.middleware.js";
-import upload from "../../../shared/middleware/upload.middleware.js";
+import { materialUpload } from "../../../shared/middleware/upload.middleware.js";
 import { validateRequest } from "../../../shared/middleware/validate.middleware.js";
 import { materialSchema, updateMaterialSchema } from "../validation/material.validation.js";
 
@@ -44,7 +44,7 @@ const router = Router();
  *       201:
  *         description: Material uploaded
  */
-router.post("/", authenticate, authorizePermission("class.update"), upload.single("file"), controller.createMaterial);
+router.post("/", authenticate, authorizePermission("class.create"), materialUpload.single("file"), controller.createMaterial);
 
 /**
  * @swagger
@@ -116,7 +116,7 @@ router.get("/:id", authenticate, controller.getMaterialById);
  *       200:
  *         description: Material updated
  */
-router.put("/:id", authenticate, authorizePermission("class.update"), validateRequest(updateMaterialSchema), controller.updateMaterial);
+router.put("/:id", authenticate, authorizePermission("class.create"), validateRequest(updateMaterialSchema), controller.updateMaterial);
 
 /**
  * @swagger
@@ -136,6 +136,6 @@ router.put("/:id", authenticate, authorizePermission("class.update"), validateRe
  *       200:
  *         description: Material deleted
  */
-router.delete("/:id", authenticate, authorizePermission("class.update"), controller.deleteMaterial);
+router.delete("/:id", authenticate, authorizePermission("class.create"), controller.deleteMaterial);
 
 export default router;

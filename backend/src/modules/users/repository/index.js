@@ -64,3 +64,25 @@ export const getAcademicRecord = async (studentId) => {
 
     return { grades, goals };
 };
+
+export const updateRoleAndValidation = async (userId, roleName, isValidated) => {
+    // First get the role id
+    const [roles] = await db.query('SELECT id FROM roles WHERE name = ?', [roleName]);
+    if (!roles.length) throw new Error(`Role ${roleName} not found`);
+    const roleId = roles[0].id;
+
+    await db.query(
+        'UPDATE users SET role_id = ?, is_validated = ? WHERE id = ?',
+        [roleId, isValidated, userId]
+    );
+};
+
+export const findAdminUsers = async () => {
+    const [rows] = await db.query(
+        `SELECT u.id 
+         FROM users u 
+         JOIN roles r ON u.role_id = r.id 
+         WHERE r.name = 'admin' AND u.is_active = TRUE AND u.is_deleted = FALSE`
+    );
+    return rows;
+};
