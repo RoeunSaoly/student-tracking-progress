@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 dotenv.config({ override: true });
 
 import app from "./app.js";
+import { initSocket } from "./socket.js";
 // database init removed
 
 const port = process.env.PORT || 5002;
@@ -12,6 +13,9 @@ const startServer = async () => {
         const server = app.listen(port, () => {
             console.log(`🚀 Server running on http://localhost:${port}`);
         });
+
+        // Initialize Socket.io
+        initSocket(server);
 
         server.on('error', (error) => {
             console.error("❌ Server error:", error);

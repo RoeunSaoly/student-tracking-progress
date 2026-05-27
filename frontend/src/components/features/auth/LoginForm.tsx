@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { motion } from "framer-motion";
+import { useSearchParams } from "next/navigation";
 import { HomeIcon, EnvelopeIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 
 export default function LoginForm() {
@@ -11,6 +12,10 @@ export default function LoginForm() {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const searchParams = useSearchParams();
+  const pendingMessage = searchParams.get('message') === 'pending' 
+    ? "Registration successful. Please wait for admin validation to login." 
+    : "";
   const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -37,9 +42,10 @@ export default function LoginForm() {
       // We need to match the User interface in AuthContext
       const user = {
         id: data.userId,
-        name: email.split('@')[0], // Backend doesn't return name yet, so we use email prefix
+        name: data.name || email.split('@')[0], 
         email: email,
-        role: data.role as 'admin' | 'teacher' | 'student'
+        role: data.role as 'admin' | 'teacher' | 'student',
+        avatar: data.avatar_url
       };
 
       login(data.accessToken, user);
@@ -85,6 +91,16 @@ export default function LoginForm() {
           className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-md text-sm font-bold text-center"
         >
           {error}
+        </motion.div>
+      )}
+
+      {pendingMessage && !error && (
+        <motion.div 
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-green-500/10 border border-green-500/20 text-green-400 px-4 py-3 rounded-md text-sm font-bold text-center"
+        >
+          {pendingMessage}
         </motion.div>
       )}
 

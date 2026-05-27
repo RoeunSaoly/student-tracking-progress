@@ -41,8 +41,10 @@ const PerformanceCircle = ({
           />
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
-          <span className="text-3xl font-semibold text-white">{percentage}%</span>
-          <span className="text-xs font-medium text-gray-400 mt-1">{label}</span>
+          <span className="text-4xl font-bold tracking-tighter bg-gradient-to-br from-white to-gray-400 bg-clip-text text-transparent">
+            {percentage}%
+          </span>
+          <span className="text-[10px] font-bold uppercase tracking-widest text-gray-500 mt-1">{label}</span>
         </div>
       </div>
       {sublabel && (

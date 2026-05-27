@@ -13,18 +13,12 @@ import {
   AcademicCapIcon
 } from '@heroicons/react/24/outline';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import { useNavItems } from '@/hooks/useNavItems';
 
 const ClassList = () => {
   const [searchTerm, setSearchTerm] = useState('');
+  const navItems = useNavItems();
   
-  const navItems = [
-    { name: 'Dashboard', href: '/teacher', icon: HomeIcon },
-    { name: 'My Classes', href: '/teacher/classes', icon: BookOpenIcon },
-    { name: 'Assignments', href: '/teacher/assignments', icon: ClipboardIcon },
-    { name: 'Students', href: '/teacher/students', icon: UsersIcon },
-    { name: 'Messages', href: '/teacher/messages', icon: ChatBubbleLeftRightIcon },
-  ];
-
   const classes = [
     { id: 1, name: "Mathematics 101", code: "MATH101", students: 32, schedule: "Mon, Wed 10:00 AM", color: "bg-blue-500" },
     { id: 2, name: "Physics Advanced", code: "PHYS302", students: 24, schedule: "Tue, Thu 02:00 PM", color: "bg-purple-500" },

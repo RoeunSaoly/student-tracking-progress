@@ -23,8 +23,25 @@ export default function ClassesPage() {
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
+  const [initialJoinCode, setInitialJoinCode] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const navItems = useNavItems();
+
+  // Check for join link parameter
+  useEffect(() => {
+    if (typeof window !== 'undefined' && user?.role === 'student') {
+      const params = new URLSearchParams(window.location.search);
+      const joinCode = params.get('join');
+      if (joinCode) {
+        setInitialJoinCode(joinCode);
+        setIsJoinModalOpen(true);
+        
+        // Clean up the URL to prevent reopening on refresh
+        const newUrl = window.location.pathname;
+        window.history.replaceState({}, '', newUrl);
+      }
+    }
+  }, [user]);
 
   const fetchClasses = useCallback(async () => {
     try {
@@ -161,8 +178,12 @@ export default function ClassesPage() {
       />
       <JoinClassModal 
         isOpen={isJoinModalOpen} 
-        onClose={() => setIsJoinModalOpen(false)} 
+        onClose={() => {
+          setIsJoinModalOpen(false);
+          setInitialJoinCode(''); // Reset on close
+        }} 
         onSuccess={fetchClasses}
+        initialCode={initialJoinCode}
       />
     </DashboardLayout>
   );

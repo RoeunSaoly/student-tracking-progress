@@ -27,15 +27,15 @@ const StatCard = ({
   progress
 }: StatCardProps) => {
   return (
-    <div className={`${bgColor} rounded-md shadow-sm p-5 border border-gray-200 transition-all duration-200 hover:shadow-md`}>
+    <div className={`${bgColor} rounded-2xl shadow-sm p-6 border border-gray-200/80 backdrop-blur-xl transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:border-blue-200/60 group`}>
       <div className="flex items-center justify-between mb-4">
-        <div className={`p-2 rounded-md ${color}`}>
-          <Icon className={`h-5 w-5 ${textColor}`} />
+        <div className={`p-2.5 rounded-xl transition-colors duration-300 ${color} group-hover:bg-blue-50`}>
+          <Icon className={`h-5 w-5 ${textColor} group-hover:text-blue-600`} />
         </div>
       </div>
-      <p className="text-gray-500 text-sm font-medium mb-1">{label}</p>
+      <p className="text-gray-500 text-sm font-medium mb-1 tracking-tight">{label}</p>
       <div className="flex items-baseline">
-        <p className="text-2xl font-semibold text-gray-900">{value}</p>
+        <p className="text-3xl font-bold tracking-tight text-gray-900">{value}</p>
       </div>
       
       {progress && (

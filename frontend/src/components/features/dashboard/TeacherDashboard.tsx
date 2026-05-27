@@ -64,6 +64,15 @@ const TeacherDashboard = () => {
 
   return (
     <DashboardLayout navItems={navItems} title="Instructor Portal">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
+          Welcome back, Instructor
+        </h1>
+        <p className="text-sm text-gray-500 mt-1">
+          Here's an overview of your classes and student performance today.
+        </p>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6 mb-8">
         {stats.map((stat) => (
           <StatCard key={stat.label} {...stat} />
@@ -73,42 +82,42 @@ const TeacherDashboard = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 space-y-8">
           <Card title="Student Performance" headerAction={
-            <select 
-              value={selectedClassId}
-              onChange={(e) => setSelectedClassId(e.target.value)}
-              className="bg-white border border-gray-200 rounded-md px-3 py-1.5 text-sm font-medium text-gray-700 outline-none focus:border-gray-400 focus:ring-1 focus:ring-gray-400 transition-all shadow-sm"
-            >
-              <option value="all">All Students</option>
-              {data?.classes?.map((c: any) => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+              <select 
+                value={selectedClassId}
+                onChange={(e) => setSelectedClassId(e.target.value)}
+                className="bg-gray-50/80 border border-gray-200/80 rounded-xl px-4 py-2 text-sm font-semibold text-gray-700 outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-all shadow-sm cursor-pointer hover:bg-gray-100/80"
+              >
+                <option value="all">All Students</option>
+                {data?.classes?.map((c: any) => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
+              </select>
           }>
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
                   <tr className="border-b border-gray-100">
-                    <th className="pb-3 font-semibold text-gray-500 uppercase text-xs">Student</th>
-                    <th className="pb-3 font-semibold text-gray-500 uppercase text-xs text-center">Avg. Grade</th>
-                    <th className="pb-3 font-semibold text-gray-500 uppercase text-xs text-right">Status</th>
+                    <th className="pb-3 font-bold text-gray-400 uppercase text-[10px] tracking-widest">Student</th>
+                    <th className="pb-3 font-bold text-gray-400 uppercase text-[10px] tracking-widest text-center">Avg. Grade</th>
+                    <th className="pb-3 font-bold text-gray-400 uppercase text-[10px] tracking-widest text-right">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {filteredStudents?.map((student: any) => (
-                    <tr key={student.id} className="group hover:bg-gray-50 transition-colors">
+                    <tr key={student.id} className="group hover:bg-gray-50/80 transition-colors">
                       <td className="py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-full bg-gray-100 border border-gray-200 flex items-center justify-center text-gray-700 font-semibold text-sm">
+                          <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300/50 flex items-center justify-center text-gray-700 font-bold text-sm shadow-sm">
                             {student.username[0].toUpperCase()}
                           </div>
                           <div>
-                            <p className="font-medium text-sm text-gray-900">{student.username}</p>
-                            <p className="text-xs text-gray-500">{student.class_name}</p>
+                            <p className="font-semibold text-sm text-gray-900">{student.username}</p>
+                            <p className="text-[11px] font-medium text-gray-500 mt-0.5">{student.class_name}</p>
                           </div>
                         </div>
                       </td>
                       <td className="py-4 text-center">
-                        <span className="font-semibold text-gray-900">{student.average_grade}%</span>
+                        <span className="font-bold text-gray-900">{student.average_grade}%</span>
                       </td>
                       <td className="py-4 text-right">
                         <Badge variant={parseFloat(student.average_grade) >= 50 ? 'success' : 'error'}>
@@ -126,13 +135,17 @@ const TeacherDashboard = () => {
         <div className="lg:col-span-4 space-y-8">
           <Card title="Quick Actions">
              <div className="grid grid-cols-1 gap-3">
-               <button onClick={() => setShowCreateClass(true)} className="flex items-center justify-between p-4 rounded-md border border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 text-gray-700 transition-all shadow-sm group">
-                 <span className="font-medium text-sm">Create Class</span>
-                 <PlusIcon className="h-5 w-5 text-gray-400 group-hover:text-gray-600" />
+               <button onClick={() => setShowCreateClass(true)} className="flex items-center justify-between p-4 rounded-xl border border-gray-200/80 bg-white/50 backdrop-blur-sm hover:border-blue-300 hover:bg-blue-50/50 hover:shadow-md text-gray-700 transition-all group">
+                 <span className="font-semibold text-sm tracking-tight">Create Class</span>
+                 <div className="p-1.5 rounded-lg bg-gray-100 group-hover:bg-blue-100 transition-colors">
+                   <PlusIcon className="h-4 w-4 text-gray-500 group-hover:text-blue-600" />
+                 </div>
                </button>
-               <button onClick={() => setShowCreateAssignment(true)} className="flex items-center justify-between p-4 rounded-md border border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50 text-gray-700 transition-all shadow-sm group">
-                 <span className="font-medium text-sm">Create Assignment</span>
-                 <PlusIcon className="h-5 w-5 text-gray-400 group-hover:text-gray-600" />
+               <button onClick={() => setShowCreateAssignment(true)} className="flex items-center justify-between p-4 rounded-xl border border-gray-200/80 bg-white/50 backdrop-blur-sm hover:border-blue-300 hover:bg-blue-50/50 hover:shadow-md text-gray-700 transition-all group">
+                 <span className="font-semibold text-sm tracking-tight">Create Assignment</span>
+                 <div className="p-1.5 rounded-lg bg-gray-100 group-hover:bg-blue-100 transition-colors">
+                   <PlusIcon className="h-4 w-4 text-gray-500 group-hover:text-blue-600" />
+                 </div>
                </button>
              </div>
           </Card>

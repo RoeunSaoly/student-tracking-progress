@@ -10,7 +10,8 @@ import {
   InformationCircleIcon,
   AcademicCapIcon,
   PresentationChartLineIcon,
-  Cog6ToothIcon
+  Cog6ToothIcon,
+  BellIcon
 } from '@heroicons/react/24/outline';
 import { useAuth } from "@/context/AuthContext";
 
@@ -24,6 +25,7 @@ export const useNavItems = () => {
       { name: "Assignments", href: "/student/assignments", icon: ClipboardIcon },
       { name: "Progress", href: "/student/progress", icon: ChartBarIcon },
       { name: "Messages", href: "/student/messages", icon: ChatBubbleLeftRightIcon },
+      { name: "Notifications", href: "/student/notifications", icon: BellIcon },
       { name: "Settings", href: "/student/settings", icon: Cog6ToothIcon },
     ];
   }
@@ -35,6 +37,7 @@ export const useNavItems = () => {
       { name: "Assignments", href: "/teacher/assignments", icon: ClipboardIcon },
       { name: "Students", href: "/teacher/students", icon: UsersIcon },
       { name: "Messages", href: "/teacher/messages", icon: ChatBubbleLeftRightIcon },
+      { name: "Notifications", href: "/teacher/notifications", icon: BellIcon },
       { name: "Settings", href: "/teacher/settings", icon: Cog6ToothIcon },
     ];
   }
@@ -48,6 +51,7 @@ export const useNavItems = () => {
       { name: "Assignments", href: "/admin/assignments", icon: ClipboardIcon },
       { name: "Analytics", href: "/admin/analytics", icon: PresentationChartLineIcon },
       { name: "Logs", href: "/admin/logs", icon: DocumentMagnifyingGlassIcon },
+      { name: "Notifications", href: "/admin/notifications", icon: BellIcon },
       { name: "Settings", href: "/admin/settings", icon: Cog6ToothIcon },
     ];
   }

@@ -1,10 +1,11 @@
 import db from "../../../config/db.js";
 
-export const findActivityLogs = async ({ userId, action, page = 1, limit = 20 }) => {
+export const findActivityLogs = async (filter) => {
+    const { userId, action, page = 1, limit = 20 } = filter;
     let query = `
         SELECT l.*, u.username, u.email
-        FROM activity_logs l
-        JOIN users u ON l.user_id = u.id
+        FROM system_logs l
+        LEFT JOIN users u ON l.user_id = u.id
         WHERE 1=1
     `;
     const params = [];
@@ -17,6 +18,11 @@ export const findActivityLogs = async ({ userId, action, page = 1, limit = 20 })
     if (action) {
         query += ` AND l.action LIKE ?`;
         params.push(`%${action}%`);
+    }
+
+    if (filter.severity) {
+        query += ` AND l.severity = ?`;
+        params.push(filter.severity);
     }
 
     query += ` ORDER BY l.created_at DESC LIMIT ? OFFSET ?`;

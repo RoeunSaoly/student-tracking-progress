@@ -323,7 +323,11 @@ export default function Header() {
                     >
                       <div className="h-7 w-7 bg-blue-100 rounded-full flex items-center justify-center border border-blue-200 overflow-hidden shadow-sm">
                         {user.avatar ? (
-                          <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                          <img 
+                            src={user.avatar.startsWith('http') ? user.avatar : `${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5002').replace('/api', '')}${user.avatar}`} 
+                            alt={user.name} 
+                            className="w-full h-full object-cover" 
+                          />
                         ) : (
                           <span className="text-[10px] font-bold text-blue-600">{getInitials(user.name)}</span>
                         )}
@@ -345,13 +349,9 @@ export default function Header() {
                             <p className="text-[10px] text-gray-500 mt-1.5 truncate">{user.email || 'user@example.com'}</p>
                           </div>
                           
-                          <Link href="/profile" className="flex items-center gap-2.5 px-2.5 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded transition-colors group">
+                          <Link href={`/${user.role}/settings`} className="flex items-center gap-2.5 px-2.5 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded transition-colors group">
                             <User className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
-                            Profile
-                          </Link>
-                          <Link href="/settings" className="flex items-center gap-2.5 px-2.5 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded transition-colors group">
-                            <Settings className="w-4 h-4 text-gray-400 group-hover:text-blue-600" />
-                            Settings
+                            Profile & Settings
                           </Link>
                           <div className="h-px bg-gray-100 my-1 mx-1"></div>
                           <button 
@@ -414,14 +414,26 @@ export default function Header() {
               ) : (
                 <div className="pt-4 border-t border-gray-100 mt-4 space-y-1">
                    <div className="px-3 py-2 flex items-center gap-3 mb-2">
-                    <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold">
-                      {getInitials(user.name)}
+                    <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold overflow-hidden shadow-sm border border-blue-200">
+                      {user.avatar ? (
+                        <img 
+                          src={user.avatar.startsWith('http') ? user.avatar : `${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5002').replace('/api', '')}${user.avatar}`} 
+                          alt={user.name} 
+                          className="w-full h-full object-cover" 
+                        />
+                      ) : (
+                        getInitials(user.name)
+                      )}
                     </div>
                     <div>
                       <p className="text-sm font-semibold text-gray-900">{user.name}</p>
                       <p className="text-xs text-gray-500 uppercase tracking-wider font-bold">{user.role}</p>
                     </div>
                   </div>
+                  <Link href={`/${user.role}/settings`} onClick={() => setIsMenuOpen(false)} className="w-full flex items-center gap-3 px-3 py-3 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+                    <User className="w-4 h-4" />
+                    Profile & Settings
+                  </Link>
                   <button onClick={logout} className="w-full flex items-center gap-3 px-3 py-3 rounded-md text-sm font-medium text-red-600 hover:bg-red-50">
                     <LogOut className="w-4 h-4" />
                     Logout

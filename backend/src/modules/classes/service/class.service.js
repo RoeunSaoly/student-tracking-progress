@@ -10,8 +10,8 @@ export const createClass = async (data, user) => {
   const code = data.code || Math.random().toString(36).substring(2, 8).toUpperCase();
 
   const classId = await repo.createClass({
-    teacher_id: user.id,
     ...data,
+    teacher_id: user.id,
     code,
   });
 
@@ -45,7 +45,7 @@ export const updateClass = async (id, data, user) => {
   const classData = await repo.findById(id);
   if (!classData) throw new Error("Class not found");
 
-  if (user.role !== "admin" && classData.teacher_id !== user.id) {
+  if (user.role !== "admin" && String(classData.teacher_id) !== String(user.id)) {
     throw new Error("Unauthorized: Only the class teacher can update details");
   }
 
@@ -78,7 +78,7 @@ export const removeStudentFromClass = async (classId, studentId, user) => {
   if (!classData) throw new Error("Class not found");
 
   // Only the teacher of the class or admin can remove a student
-  if (user.role !== "admin" && classData.teacher_id !== user.id) {
+  if (user.role !== "admin" && String(classData.teacher_id) !== String(user.id)) {
     throw new Error("Unauthorized: Only the class teacher can remove students");
   }
 
@@ -90,9 +90,15 @@ export const getEnrolledStudents = async (classId, user) => {
   const classData = await repo.findById(classId);
   if (!classData) throw new Error("Class not found");
 
-  // Only the teacher of the class, admin, or an enrolled student can see the list
-  // For now, let's allow teachers and admins
-  if (user.role !== "admin" && classData.teacher_id !== user.id) {
+  const isTeacher = String(classData.teacher_id) === String(user.id);
+  const isAdmin = user.role === "admin";
+  
+  let isEnrolled = false;
+  if (user.role === "student") {
+    isEnrolled = await repo.checkEnrollment(classId, user.id);
+  }
+
+  if (!isAdmin && !isTeacher && !isEnrolled) {
     throw new Error("Unauthorized");
   }
 

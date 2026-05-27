@@ -1,4 +1,5 @@
 import * as repo from "../repository/notification.repository.js";
+import { getIO } from "../../../app/socket.js";
 
 export const getNotifications = async (userId) => {
   return await repo.findByUserId(userId);
@@ -20,5 +21,17 @@ export const deleteNotification = async (id, userId) => {
 };
 
 export const addNotification = async (userId, data) => {
-  return await repo.createNotification(userId, data);
+  const notificationId = await repo.createNotification(userId, data);
+  try {
+    const io = getIO();
+    io.to(userId.toString()).emit("new_notification", {
+      id: notificationId,
+      ...data,
+      is_read: false,
+      created_at: new Date().toISOString()
+    });
+  } catch (err) {
+    console.error("Socket notification failed:", err.message);
+  }
+  return notificationId;
 };

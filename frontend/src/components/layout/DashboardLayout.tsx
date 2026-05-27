@@ -14,13 +14,18 @@ import {
   BookOpenIcon,
   ClipboardDocumentListIcon,
   InformationCircleIcon,
-  ClockIcon
+  ClockIcon,
+  MagnifyingGlassIcon,
+  ChatBubbleLeftRightIcon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/lib/axios';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getSocket } from '@/lib/socket';
+import { Socket } from 'socket.io-client';
+import DialogModal from '@/components/ui/DialogModal';
 
 interface NavItem {
   name: string;
@@ -39,6 +44,7 @@ interface Notification {
   title: string;
   message: string;
   type: string;
+  link?: string;
   is_read: boolean;
   created_at: string;
 }
@@ -53,7 +59,10 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
   // Notification States
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [selectedNotif, setSelectedNotif] = useState<Notification | null>(null);
+  const [toastNotification, setToastNotification] = useState<Notification | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const socketRef = useRef<Socket | null>(null);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
@@ -92,6 +101,13 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
   const handleDeleteNotification = async (id: number, e: React.MouseEvent) => {
     e.stopPropagation(); // Avoid triggering markAsRead on parent click
     try {
+      // Local mock notifications are given large timestamp IDs (e.g. > 1 trillion)
+      // They don't exist in the DB, so we only remove them from local state.
+      if (id > 1000000000000) {
+        setNotifications(prev => prev.filter(n => n.id !== id));
+        return;
+      }
+      
       await api.delete(`/notifications/${id}`);
       setNotifications(prev => prev.filter(n => n.id !== id));
     } catch (err) {
@@ -120,13 +136,66 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
       };
       
       document.addEventListener('mousedown', handleClickOutside);
+
+      // Socket.io for Real-time Message Notifications
+      const socket = getSocket();
+      if (!socket.connected) {
+        socket.connect();
+      }
+      socketRef.current = socket;
+
+      socket.emit('join', user.id);
+
+      // Clean up previous listeners to prevent duplicates during fast refreshes
+      socket.off('new_message');
+      socket.off('new_notification');
+
+      socket.on('new_message', (msg: any) => {
+        const newNotif: Notification = {
+          id: Date.now(), // Local temporary ID
+          title: `New message from ${msg.sender_name || 'User'}`,
+          message: msg.content,
+          type: 'message',
+          is_read: false,
+          created_at: new Date().toISOString()
+        };
+        
+        // Show browser notification if permitted
+        if ('Notification' in window && window.Notification.permission === 'granted') {
+          new window.Notification(newNotif.title, { body: newNotif.message });
+        }
+
+        setNotifications(prev => [newNotif, ...prev]);
+        setToastNotification(newNotif);
+        setTimeout(() => setToastNotification(null), 5000);
+      });
+
+      socket.on('new_notification', (notif: Notification) => {
+        // Show browser notification if permitted
+        if ('Notification' in window && window.Notification.permission === 'granted') {
+          new window.Notification(notif.title, { body: notif.message });
+        }
+
+        setNotifications(prev => [notif, ...prev]);
+        setToastNotification(notif);
+        setTimeout(() => setToastNotification(null), 5000);
+      });
       
       return () => {
         clearInterval(interval);
         document.removeEventListener('mousedown', handleClickOutside);
+        socket.off('new_message');
+        socket.off('new_notification');
       };
     }
   }, [user, isLoading, router, fetchNotifications]);
+
+  // Request Notification permission on mount
+  useEffect(() => {
+    if ('Notification' in window && window.Notification.permission === 'default') {
+      window.Notification.requestPermission();
+    }
+  }, []);
 
   if (isLoading || !user) {
     return (
@@ -167,6 +236,8 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
         return <ClipboardDocumentListIcon className="h-5 w-5 text-purple-600" />;
       case 'class':
         return <BookOpenIcon className="h-5 w-5 text-blue-600" />;
+      case 'message':
+        return <ChatBubbleLeftRightIcon className="h-5 w-5 text-indigo-600" />;
       default:
         return <InformationCircleIcon className="h-5 w-5 text-indigo-600" />;
     }
@@ -177,6 +248,7 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
       case 'grade': return 'bg-green-50';
       case 'assignment': return 'bg-purple-50';
       case 'class': return 'bg-blue-50';
+      case 'message': return 'bg-indigo-50';
       default: return 'bg-indigo-50';
     }
   };
@@ -222,7 +294,16 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: 'auto' }}
                 exit={{ opacity: 0, height: 0 }}
-                onClick={() => !n.is_read && handleMarkAsRead(n.id)}
+                onClick={() => {
+                  if (!n.is_read) handleMarkAsRead(n.id);
+                  if (n.type === 'message') {
+                    router.push(`/${user?.role}/messages`);
+                    setIsNotificationsOpen(false);
+                  } else {
+                    setSelectedNotif(n);
+                    setIsNotificationsOpen(false);
+                  }
+                }}
                 className={`p-3 rounded-md flex items-start gap-3 transition-all cursor-pointer relative group my-0.5
                   ${n.is_read ? 'hover:bg-gray-50/70' : 'bg-blue-50/30 hover:bg-blue-50/50'}`}
               >
@@ -271,33 +352,43 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
           )}
         </AnimatePresence>
       </div>
+
+      <div className="p-3 border-t border-gray-100 bg-gray-50/50 text-center">
+        <Link 
+          href={`/${user?.role}/notifications`}
+          onClick={() => setIsNotificationsOpen(false)}
+          className="text-xs font-bold text-blue-600 hover:text-blue-700 hover:underline transition-all"
+        >
+          View all notifications &rarr;
+        </Link>
+      </div>
     </motion.div>
   );
 
   return (
     <div className="flex min-h-screen bg-gray-50">
       {/* Desktop Sidebar */}
-      <div className="hidden md:flex flex-col w-64 bg-gray-900 text-white sticky top-0 h-screen">
+      <div className="hidden md:flex flex-col w-64 bg-[#0a0f1c] border-r border-gray-800/50 text-white sticky top-0 h-screen">
         <div className="p-6">
           <Link href="/">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">
+            <h1 className="text-2xl font-bold bg-gradient-to-r from-indigo-400 via-blue-400 to-sky-400 bg-clip-text text-transparent">
               {portalTitle}
             </h1>
           </Link>
         </div>
-        <nav className="flex-1 px-4 mt-4">
-          <ul className="space-y-2">
+        <nav className="flex-1 px-4 mt-2">
+          <ul className="space-y-1.5">
             {navItems.map((item) => {
               const isActive = pathname === item.href;
               return (
                 <li key={item.name}>
                   <Link href={item.href}>
                     <button
-                      className={`flex items-center w-full p-3 rounded-md transition-all duration-200
-                      ${isActive ? "bg-blue-600 shadow-lg shadow-blue-900/50" : "hover:bg-gray-800 text-gray-400 hover:text-white"}`}
+                      className={`flex items-center w-full p-2.5 rounded-xl transition-all duration-200 group
+                      ${isActive ? "bg-indigo-600/10 text-indigo-400 border border-indigo-500/20 shadow-[inset_0_1px_0_0_rgba(255,255,255,0.05)]" : "text-gray-400 hover:bg-gray-800/50 hover:text-gray-100"}`}
                     >
-                      <item.icon className="h-5 w-5 mr-3" />
-                      <span className="font-medium">{item.name}</span>
+                      <item.icon className={`h-5 w-5 mr-3 transition-colors ${isActive ? 'text-indigo-400' : 'text-gray-500 group-hover:text-gray-300'}`} />
+                      <span className="font-medium text-sm tracking-wide">{item.name}</span>
                     </button>
                   </Link>
                 </li>
@@ -305,7 +396,7 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
             })}
           </ul>
         </nav>
-        <div className="p-4 border-t border-gray-800">
+        <div className="p-4 border-t border-gray-800/50">
           <button 
             onClick={logout}
             className="flex items-center w-full p-3 rounded-md text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-all mb-4"
@@ -315,7 +406,15 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
           </button>
           
           <div className="flex items-center p-2 rounded-md hover:bg-gray-800 transition-colors cursor-pointer group">
-            <UserCircleIcon className="h-10 w-10 mr-3 text-gray-400 group-hover:text-white" />
+            {user?.avatar ? (
+              <img 
+                src={user.avatar.startsWith('http') ? user.avatar : `${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5002').replace('/api', '')}${user.avatar}`}
+                alt={userName}
+                className="h-10 w-10 mr-3 rounded-full object-cover border border-gray-600"
+              />
+            ) : (
+              <UserCircleIcon className="h-10 w-10 mr-3 text-gray-400 group-hover:text-white" />
+            )}
             <div className="overflow-hidden">
               <p className="font-medium truncate">{userName}</p>
               <p className="text-xs text-gray-400 uppercase tracking-widest">{user?.role || 'Guest'}</p>
@@ -328,9 +427,17 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
       <div className="md:hidden fixed top-0 left-0 right-0 h-16 bg-gray-900 text-white p-4 z-30 flex items-center justify-between">
         <button 
           onClick={() => setIsMobileMenuOpen(true)} 
-          className="h-9 w-9 bg-blue-600 hover:bg-blue-500 rounded-md flex items-center justify-center text-white font-bold text-sm shadow-md shadow-blue-500/20 active:scale-95 transition-all"
+          className="h-9 w-9 bg-blue-600 hover:bg-blue-500 rounded-md flex items-center justify-center text-white font-bold text-sm shadow-md shadow-blue-500/20 active:scale-95 transition-all overflow-hidden"
         >
-          {userName.charAt(0)}
+          {user?.avatar ? (
+            <img 
+              src={user.avatar.startsWith('http') ? user.avatar : `${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5002').replace('/api', '')}${user.avatar}`}
+              alt={userName}
+              className="h-full w-full object-cover"
+            />
+          ) : (
+            userName.charAt(0)
+          )}
         </button>
         <h1 className="text-base font-black tracking-tight">{portalTitle}</h1>
         
@@ -342,7 +449,9 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
           >
             <BellIcon className="h-6 w-6" />
             {unreadCount > 0 && (
-              <span className="absolute top-2 right-2 h-2.5 w-2.5 bg-red-500 rounded-full ring-2 ring-gray-900 animate-pulse"></span>
+              <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white ring-2 ring-gray-900 animate-pulse shadow-sm">
+                {unreadCount > 9 ? '9+' : unreadCount}
+              </span>
             )}
           </button>
 
@@ -390,8 +499,16 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
             <div>
               <div className="flex justify-between items-center mb-8 border-b border-gray-800 pb-4">
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 bg-blue-600 rounded-md flex items-center justify-center font-bold text-sm shadow-md">
-                    {userName.charAt(0)}
+                  <div className="h-10 w-10 bg-blue-600 rounded-md flex items-center justify-center font-bold text-sm shadow-md overflow-hidden">
+                    {user?.avatar ? (
+                      <img 
+                        src={user.avatar.startsWith('http') ? user.avatar : `${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5002').replace('/api', '')}${user.avatar}`}
+                        alt={userName}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      userName.charAt(0)
+                    )}
                   </div>
                   <div>
                     <h3 className="font-bold text-sm">{userName}</h3>
@@ -426,12 +543,19 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
       )}
 
       {/* Main Content Area */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-[#f8fafc]">
         {/* Desktop Top Header */}
-        <header className="hidden md:flex h-16 bg-white border-b items-center justify-between px-8 sticky top-0 z-20">
-          <h2 className="text-lg font-semibold text-gray-800">
-            {portalTitle}
-          </h2>
+        <header className="hidden md:flex h-16 bg-white/70 backdrop-blur-xl border-b border-gray-200/80 items-center justify-between px-8 sticky top-0 z-20">
+          <div className="flex items-center flex-1">
+            <h2 className="text-xl font-bold tracking-tight text-gray-900 mr-8">
+              {portalTitle}
+            </h2>
+            <button className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-gray-100/80 hover:bg-gray-200/80 text-gray-500 rounded-lg text-sm transition-colors border border-gray-200/50 w-64 max-w-xs group shadow-sm">
+              <MagnifyingGlassIcon className="h-4 w-4 text-gray-400 group-hover:text-gray-500" />
+              <span className="flex-1 text-left text-sm">Search anywhere...</span>
+              <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-semibold text-gray-500 bg-white border border-gray-200 rounded shadow-sm">⌘K</kbd>
+            </button>
+          </div>
           <div className="flex items-center space-x-6">
             
             {/* Live Notification Dropdown Container */}
@@ -442,7 +566,9 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
               >
                 <BellIcon className="h-6 w-6" />
                 {unreadCount > 0 && (
-                  <span className="absolute top-2 right-2 h-2.5 w-2.5 bg-red-500 rounded-full ring-2 ring-white animate-pulse"></span>
+                  <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white ring-2 ring-white animate-pulse shadow-sm">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
                 )}
               </button>
 
@@ -452,26 +578,93 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
             </div>
 
             <div className="h-8 w-px bg-gray-200"></div>
-            <div className="flex items-center space-x-3 cursor-pointer group">
+            <Link 
+              href={`/${user?.role}/settings`} 
+              className="flex items-center space-x-3 cursor-pointer group hover:bg-gray-50 px-2 py-1.5 rounded-xl transition-colors"
+            >
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-semibold text-gray-800">{userName}</p>
                 <p className="text-xs text-gray-500 uppercase tracking-wider">{user?.role || 'Online'}</p>
               </div>
-              <div className="h-9 w-9 bg-blue-100 rounded-md flex items-center justify-center text-blue-600 font-bold group-hover:bg-blue-600 group-hover:text-white transition-all duration-200">
-                {userName.charAt(0)}
+              <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center text-blue-600 font-bold group-hover:ring-4 group-hover:ring-blue-100 transition-all duration-300 overflow-hidden shadow-sm border border-gray-200">
+                {user?.avatar ? (
+                  <img 
+                    src={user.avatar.startsWith('http') ? user.avatar : `${(process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5002').replace('/api', '')}${user.avatar}`}
+                    alt={userName}
+                    className="h-full w-full object-cover"
+                  />
+                ) : (
+                  userName.charAt(0)
+                )}
               </div>
-              <ChevronDownIcon className="h-4 w-4 text-gray-400" />
-            </div>
+              <ChevronDownIcon className="h-4 w-4 text-gray-400 group-hover:text-blue-500 transition-colors" />
+            </Link>
           </div>
         </header>
 
         {/* Content with Mobile clearing bottom nav padding */}
         <main className="flex-1 p-4 md:p-8 mt-16 pb-24 md:pb-8 md:mt-0">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-[1440px] mx-auto">
             {children}
           </div>
         </main>
       </div>
+
+      {/* Notification Detail Modal */}
+      <AnimatePresence>
+        {selectedNotif && (
+          <DialogModal
+            isOpen={!!selectedNotif}
+            onClose={() => setSelectedNotif(null)}
+            title={selectedNotif.title}
+            message={selectedNotif.message}
+            type="info"
+            confirmText={selectedNotif.link ? "View Details" : "Close"}
+            onConfirm={() => {
+              if (selectedNotif.link) {
+                router.push(selectedNotif.link);
+              }
+            }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Live Toast Notification */}
+      <AnimatePresence>
+        {toastNotification && (
+          <motion.div
+            initial={{ opacity: 0, y: -50, scale: 0.9 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.9, filter: "blur(4px)" }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className="fixed top-6 right-6 z-[100] w-80 bg-white rounded-xl shadow-2xl border border-gray-100 overflow-hidden cursor-pointer"
+            onClick={() => {
+              setToastNotification(null);
+              setIsNotificationsOpen(true);
+            }}
+          >
+            <div className="absolute top-0 left-0 w-1 h-full bg-blue-600"></div>
+            <div className="p-4 flex items-start gap-3 relative">
+              <div className={`p-2 rounded-lg ${getNotificationBg(toastNotification.type)}`}>
+                {getNotificationIcon(toastNotification.type)}
+              </div>
+              <div className="flex-1 pr-4">
+                <h4 className="font-bold text-gray-800 text-sm">{toastNotification.title}</h4>
+                <p className="text-xs text-gray-500 mt-1 line-clamp-2">{toastNotification.message}</p>
+              </div>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setToastNotification(null);
+                }}
+                className="absolute top-2 right-2 p-1 text-gray-400 hover:text-gray-600 bg-gray-50 rounded-full"
+              >
+                <XMarkIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

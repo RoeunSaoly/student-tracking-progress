@@ -16,13 +16,13 @@ const Card = ({
   variant = 'white'
 }: CardProps) => {
   const variants = {
-    white: "bg-white border-gray-200 text-gray-900",
-    dark: "bg-gray-900 border-gray-800 text-white",
-    gray: "bg-gray-50 border-gray-200 text-gray-800"
+    white: "bg-white/95 backdrop-blur-xl border-gray-200/80 text-gray-900 shadow-sm shadow-gray-200/50",
+    dark: "bg-[#0f172a]/95 backdrop-blur-xl border-gray-800 text-white shadow-xl shadow-blue-900/10",
+    gray: "bg-gray-50/90 backdrop-blur-xl border-gray-200/80 text-gray-800"
   };
 
   return (
-    <div className={`${variants[variant]} rounded-md shadow-sm border p-6 ${className}`}>
+    <div className={`${variants[variant]} rounded-2xl border p-6 transition-all duration-300 hover:shadow-md ${className}`}>
       {(title || headerAction) && (
         <div className="flex justify-between items-center mb-8">
           {title && (

@@ -27,6 +27,18 @@ export const deleteUser = async (id, adminId) => {
     return { message: "User deleted successfully" };
 };
 
+export const bulkActionUsers = async (userIds, action, data, adminId) => {
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+        throw new Error("No users provided");
+    }
+    if (action === 'delete' && userIds.includes(adminId)) {
+        throw new Error("Admin cannot delete themselves in a bulk action");
+    }
+    
+    await repo.bulkActionUsers(userIds, action, data);
+    return { message: `Bulk action '${action}' applied successfully to ${userIds.length} users` };
+};
+
 export const validateTeacher = async (id, isValidated) => {
     const user = await repo.findUserById(id);
     if (!user) throw new Error("User not found");

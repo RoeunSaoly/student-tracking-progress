@@ -3,6 +3,7 @@ import * as controller from "../controller/message.controller.js";
 import { authenticate } from "../../../shared/middleware/auth.middleware.js";
 import { authorizeRoles } from "../../../shared/middleware/role.middleware.js";
 import { validateRequest } from "../../../shared/middleware/validate.middleware.js";
+import { messageUpload } from "../../../shared/middleware/upload.middleware.js";
 import { messageSchema, announcementSchema } from "../validation/message.validation.js";
 
 const router = Router();
@@ -38,7 +39,9 @@ const router = Router();
  *       201:
  *         description: Message sent
  */
-router.post("/", authenticate, validateRequest(messageSchema), controller.sendMessage);
+router.post("/", authenticate, messageUpload.single('file'), validateRequest(messageSchema), controller.sendMessage);
+
+router.get("/recent/contacts", authenticate, controller.getRecentConversations);
 
 /**
  * @swagger

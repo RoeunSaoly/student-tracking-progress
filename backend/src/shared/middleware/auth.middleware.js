@@ -1,6 +1,7 @@
 import { verifyAccessToken } from "../../shared/utils/jwt.js";
+import db from "../../config/db.js";
 
-export const authenticate = (req, res, next) => {
+export const authenticate = async (req, res, next) => {
     try {
         const authHeader = req.headers.authorization;
 
@@ -19,7 +20,21 @@ export const authenticate = (req, res, next) => {
             });
         }
 
-        req.user = decoded;
+        const [users] = await db.query(
+            'SELECT u.id, u.is_active, u.is_deleted, r.name as role FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?', 
+            [decoded.id]
+        );
+        if (users.length === 0) {
+            return res.status(401).json({ message: "User no longer exists" });
+        }
+        if (users[0].is_deleted || !users[0].is_active) {
+            return res.status(403).json({ message: "Account is inactive or deleted" });
+        }
+
+        req.user = {
+            ...decoded,
+            role: users[0].role
+        };
         next();
     } catch (err) {
         next(err);

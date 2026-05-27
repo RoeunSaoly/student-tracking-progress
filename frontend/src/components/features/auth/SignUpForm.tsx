@@ -13,7 +13,7 @@ export default function SignUpForm() {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'student' as 'student' | 'teacher'
+    role: 'student' as const
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -67,7 +67,11 @@ export default function SignUpForm() {
 
       // Delay slightly for UX so they see the success message
       setTimeout(() => {
-        login(data.accessToken, user);
+        if (data.accessToken) {
+          login(data.accessToken, user);
+        } else {
+          window.location.href = '/login?message=pending';
+        }
       }, 1500);
     } catch (err: any) {
       setError(err.message || "Failed to register. Please try again.");
@@ -153,23 +157,7 @@ export default function SignUpForm() {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="role" className="block text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">
-            I am a...
-          </label>
-          <div className="relative group">
-            <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500 group-focus-within:text-blue-500 transition-colors" />
-            <select
-              id="role"
-              className="w-full pl-12 pr-4 py-4 bg-white/5 border border-white/10 text-white rounded-md focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 outline-none transition-all font-medium appearance-none"
-              value={formData.role}
-              onChange={handleChange}
-            >
-              <option value="student" className="bg-gray-900 text-white">Student</option>
-              <option value="teacher" className="bg-gray-900 text-white">Teacher</option>
-            </select>
-          </div>
-        </div>
+
 
         <div className="space-y-2">
           <label htmlFor="password" className="block text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">

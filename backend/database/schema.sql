@@ -24,6 +24,8 @@ CREATE TABLE users (
     is_active BOOLEAN DEFAULT TRUE,
     is_validated BOOLEAN DEFAULT FALSE,
     is_deleted BOOLEAN DEFAULT FALSE,
+    status ENUM('active', 'suspended', 'pending') DEFAULT 'pending',
+    last_login_at TIMESTAMP NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
@@ -213,6 +215,63 @@ CREATE TABLE refresh_tokens (
     revoked BOOLEAN DEFAULT FALSE,
 
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- =====================================
+-- SYSTEM LOGS
+-- =====================================
+CREATE TABLE system_logs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NULL,
+    action VARCHAR(255) NOT NULL,
+    severity ENUM('INFO', 'WARNING', 'ERROR') DEFAULT 'INFO',
+    details JSON,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- =====================================
+-- NOTIFICATIONS
+-- =====================================
+CREATE TABLE notifications (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NULL,
+    target_role ENUM('student', 'teacher', 'admin', 'all') NULL,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    type VARCHAR(50) NOT NULL,
+    link VARCHAR(255) DEFAULT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- =====================================
+-- TEACHER REQUESTS
+-- =====================================
+CREATE TABLE teacher_requests (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    phone VARCHAR(20),
+    degree VARCHAR(100) NOT NULL,
+    major VARCHAR(100) NOT NULL,
+    university VARCHAR(255) NOT NULL,
+    graduation_year INT NOT NULL,
+    experience_years INT NOT NULL,
+    previous_workplace VARCHAR(255),
+    subjects JSON NOT NULL,
+    documents JSON NOT NULL,
+    status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+    admin_note TEXT,
+    reviewed_by INT DEFAULT NULL,
+    reviewed_at TIMESTAMP NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (reviewed_by) REFERENCES users(id) ON DELETE SET NULL
 );
 
 -- =====================================

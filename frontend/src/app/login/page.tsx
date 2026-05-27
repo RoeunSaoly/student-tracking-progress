@@ -1,5 +1,6 @@
 import AuthLayout from '@/components/features/auth/AuthLayout';
 import LoginForm from '@/components/features/auth/LoginForm';
+import { Suspense } from 'react';
 
 export default function LoginPage() {
   const sideContent = (
@@ -29,7 +30,9 @@ export default function LoginPage() {
 
   return (
     <AuthLayout sideContent={sideContent} layout="form-left">
-      <LoginForm />
+      <Suspense fallback={<div>Loading...</div>}>
+        <LoginForm />
+      </Suspense>
     </AuthLayout>
   );
 }

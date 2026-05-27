@@ -1,20 +1,20 @@
 import db from "../../../config/db.js";
 
 export const createMaterial = async (data) => {
-  const { class_id, title, description, file_path, uploaded_by } = data;
+  const { class_id, title, file_url } = data;
   const [result] = await db.query(
-    `INSERT INTO materials (class_id, title, description, file_path, uploaded_by)
-     VALUES (?, ?, ?, ?, ?)`,
-    [class_id, title, description, file_path, uploaded_by]
+    `INSERT INTO materials (class_id, title, file_url)
+     VALUES (?, ?, ?)`,
+    [class_id, title, file_url]
   );
   return result.insertId;
 };
 
 export const updateMaterial = async (id, data) => {
-  const { title, description, file_path } = data;
+  const { title, file_url } = data;
   await db.query(
-    `UPDATE materials SET title = ?, description = ?, file_path = ? WHERE id = ?`,
-    [title, description, file_path, id]
+    `UPDATE materials SET title = ?, file_url = ? WHERE id = ?`,
+    [title, file_url, id]
   );
 };
 
@@ -24,10 +24,9 @@ export const deleteMaterial = async (id) => {
 
 export const findMaterialsByClass = async (classId) => {
   const [rows] = await db.query(
-    `SELECT m.*, u.username as uploader_name 
-     FROM materials m
-     JOIN users u ON m.uploaded_by = u.id
-     WHERE class_id = ? ORDER BY created_at DESC`,
+    `SELECT *
+     FROM materials
+     WHERE class_id = ? ORDER BY uploaded_at DESC`,
     [classId]
   );
   return rows;

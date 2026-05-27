@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Modal from '@/components/ui/Modal';
 import api from '@/lib/axios';
 
@@ -8,12 +8,19 @@ interface JoinClassModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  initialCode?: string;
 }
 
-const JoinClassModal = ({ isOpen, onClose, onSuccess }: JoinClassModalProps) => {
+const JoinClassModal = ({ isOpen, onClose, onSuccess, initialCode = '' }: JoinClassModalProps) => {
   const [loading, setLoading] = useState(false);
-  const [code, setCode] = useState('');
+  const [code, setCode] = useState(initialCode);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    if (initialCode) {
+      setCode(initialCode);
+    }
+  }, [initialCode]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

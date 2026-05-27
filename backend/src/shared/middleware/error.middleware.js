@@ -23,7 +23,7 @@ export const errorHandler = (err, req, res, next) => {
     statusCode = 401;
   }
   
-  if (message.includes('pending admin validation') || message.includes('Account is inactive') || message.includes('Account has been deleted')) {
+  if (message.includes('pending admin validation') || message.includes('Account is inactive') || message.includes('Account has been deleted') || message.includes('Unauthorized')) {
     statusCode = 403;
   }
 
