@@ -9,6 +9,7 @@ export const getSocket = () => {
     socket = io(socketUrl, {
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      transports: ['websocket', 'polling']
     });
   }
   return socket;

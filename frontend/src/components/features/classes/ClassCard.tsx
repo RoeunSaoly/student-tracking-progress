@@ -1,7 +1,8 @@
 "use client";
 
-import { AcademicCapIcon, UserIcon, ClipboardDocumentListIcon, ArrowRightIcon } from '@heroicons/react/24/outline';
+import { AcademicCapIcon, UserIcon, ClipboardDocumentListIcon, ArrowRightIcon, EllipsisVerticalIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import Link from 'next/link';
+import { useState, useEffect, useRef } from 'react';
 
 interface ClassCardProps {
   id: number;
@@ -12,9 +13,24 @@ interface ClassCardProps {
   completed_assignments?: number;
   role: 'teacher' | 'student';
   code?: string;
+  onEdit?: (id: number) => void;
+  onDelete?: (id: number) => void;
 }
 
-const ClassCard = ({ id, name, teacher_name, student_count, total_assignments, completed_assignments, role, code }: ClassCardProps) => {
+const ClassCard = ({ id, name, teacher_name, student_count, total_assignments, completed_assignments, role, code, onEdit, onDelete }: ClassCardProps) => {
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const progress = total_assignments && total_assignments > 0 
     ? Math.round(((completed_assignments || 0) / total_assignments) * 100) 
     : 0;
@@ -26,9 +42,37 @@ const ClassCard = ({ id, name, teacher_name, student_count, total_assignments, c
           <AcademicCapIcon className="h-6 w-6 text-blue-600 group-hover:text-white" />
         </div>
         {role === 'teacher' && code && (
-          <div className="text-right">
-            <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Class Code</span>
-            <span className="bg-gray-900 text-white px-3 py-1 rounded-md text-xs font-mono font-bold tracking-wider">{code}</span>
+          <div className="flex items-start gap-3 text-right">
+            <div>
+              <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest block mb-1">Class Code</span>
+              <span className="bg-gray-900 text-white px-3 py-1 rounded-md text-xs font-mono font-bold tracking-wider">{code}</span>
+            </div>
+            
+            <div className="relative" ref={dropdownRef}>
+              <button 
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="p-1.5 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                <EllipsisVerticalIcon className="h-5 w-5 text-gray-400" />
+              </button>
+              
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-100 py-1 z-10">
+                  <button 
+                    onClick={() => { setDropdownOpen(false); onEdit?.(id); }}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
+                  >
+                    <PencilIcon className="h-4 w-4" /> Edit Class
+                  </button>
+                  <button 
+                    onClick={() => { setDropdownOpen(false); onDelete?.(id); }}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                  >
+                    <TrashIcon className="h-4 w-4" /> Delete Class
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

@@ -14,6 +14,8 @@ import {
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useNavItems } from '@/hooks/useNavItems';
 import { motion } from 'framer-motion';
+import { assignmentService } from '@/services/assignmentService';
+import Link from 'next/link';
 
 interface AssignmentData {
   id: number;
@@ -34,16 +36,16 @@ export default function AdminAssignmentsPage() {
   const navItems = useNavItems();
 
   const fetchAssignments = useCallback(async () => {
-    setLoading(true);
-    // MOCK DATA for premium UI presentation
-    setTimeout(() => {
-      setAssignments([
-        { id: 1, title: "Midterm Physics Project", class_name: "Introduction to Physics", teacher_name: "Michael Chen", due_date: "2026-05-25T23:59:00Z", total_students: 31, submitted_count: 28, late_count: 2 },
-        { id: 2, title: "Calculus Problem Set 4", class_name: "Advanced Mathematics 101", teacher_name: "Sarah Jenkins", due_date: "2026-05-20T23:59:00Z", total_students: 24, submitted_count: 24, late_count: 5 },
-        { id: 3, title: "Industrial Revolution Essay", class_name: "World History: Modern Era", teacher_name: "Emily Rodriguez", due_date: "2026-06-01T17:00:00Z", total_students: 18, submitted_count: 5, late_count: 0 },
-      ]);
+    try {
+      setLoading(true);
+      const data = await assignmentService.getAdminAssignments();
+      setAssignments(data);
+    } catch (error) {
+      console.error('Failed to fetch assignments:', error);
+      alert('Failed to load assignments');
+    } finally {
       setLoading(false);
-    }, 800);
+    }
   }, []);
 
   useEffect(() => {
@@ -182,10 +184,12 @@ export default function AdminAssignmentsPage() {
                       </div>
 
                       {/* Action */}
-                      <button className="flex-shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 font-bold text-xs uppercase tracking-wider transition-all shadow-md">
-                        <DocumentCheckIcon className="h-4 w-4" />
-                        Submissions
-                      </button>
+                      <Link href={`/assignments/${assignment.id}`}>
+                        <button className="flex-shrink-0 flex items-center justify-center gap-2 px-4 py-2.5 bg-gray-900 text-white rounded-md hover:bg-gray-800 font-bold text-xs uppercase tracking-wider transition-all shadow-md w-full sm:w-auto">
+                          <DocumentCheckIcon className="h-4 w-4" />
+                          Submissions
+                        </button>
+                      </Link>
                     </div>
                   </motion.div>
                 );

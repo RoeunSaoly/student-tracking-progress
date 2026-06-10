@@ -12,6 +12,7 @@ export interface Assignment {
   class_name?: string;
   submission_count?: number;
   total_students?: number;
+  class_is_active?: number | boolean;
 }
 
 export interface Submission {
@@ -30,6 +31,11 @@ export interface Submission {
 export const assignmentService = {
   getAssignmentsByClass: async (classId: string) => {
     const response = await api.get(`/assignments?class_id=${classId}`);
+    return response.data;
+  },
+
+  getAdminAssignments: async () => {
+    const response = await api.get('/admin/assignments');
     return response.data;
   },
 

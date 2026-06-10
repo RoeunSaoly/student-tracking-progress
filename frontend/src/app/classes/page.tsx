@@ -11,7 +11,9 @@ import {
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import ClassCard from '@/components/features/classes/ClassCard';
 import CreateClassModal from '@/components/features/classes/CreateClassModal';
+import EditClassModal from '@/components/features/classes/EditClassModal';
 import JoinClassModal from '@/components/features/classes/JoinClassModal';
+import DialogModal from '@/components/ui/DialogModal';
 import api from '@/lib/axios';
 import { useAuth } from '@/context/AuthContext';
 import { useNavItems } from '@/hooks/useNavItems';
@@ -22,6 +24,9 @@ export default function ClassesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [selectedClass, setSelectedClass] = useState<any>(null);
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [initialJoinCode, setInitialJoinCode] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
@@ -59,6 +64,35 @@ export default function ClassesPage() {
   useEffect(() => {
     fetchClasses();
   }, [fetchClasses]);
+
+  const handleDelete = async () => {
+    if (!selectedClass) return;
+    try {
+      await api.delete(`/classes/${selectedClass.id}`);
+      fetchClasses();
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Failed to delete class');
+    } finally {
+      setIsDeleteModalOpen(false);
+      setSelectedClass(null);
+    }
+  };
+
+  const handleEditOpen = (id: number) => {
+    const cls = classes.find(c => c.id === id);
+    if (cls) {
+      setSelectedClass(cls);
+      setIsEditModalOpen(true);
+    }
+  };
+
+  const handleDeleteOpen = (id: number) => {
+    const cls = classes.find(c => c.id === id);
+    if (cls) {
+      setSelectedClass(cls);
+      setIsDeleteModalOpen(true);
+    }
+  };
 
   const filteredClasses = classes.filter(c => 
     c.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -141,6 +175,8 @@ export default function ClassesPage() {
               key={item.id}
               {...item}
               role={user?.role as any}
+              onEdit={handleEditOpen}
+              onDelete={handleDeleteOpen}
             />
           ))}
         </div>
@@ -175,6 +211,29 @@ export default function ClassesPage() {
         isOpen={isCreateModalOpen} 
         onClose={() => setIsCreateModalOpen(false)} 
         onSuccess={fetchClasses}
+      />
+      <EditClassModal 
+        isOpen={isEditModalOpen} 
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedClass(null);
+        }} 
+        onSuccess={fetchClasses} 
+        classId={selectedClass?.id || null}
+        initialName={selectedClass?.name || ''}
+        initialDescription={selectedClass?.description || ''}
+      />
+      <DialogModal
+        isOpen={isDeleteModalOpen}
+        onClose={() => {
+          setIsDeleteModalOpen(false);
+          setSelectedClass(null);
+        }}
+        onConfirm={handleDelete}
+        title="Delete Class"
+        message={`Are you sure you want to delete "${selectedClass?.name}"? This action cannot be undone.`}
+        type="confirm"
+        confirmText="Yes, Delete"
       />
       <JoinClassModal 
         isOpen={isJoinModalOpen} 

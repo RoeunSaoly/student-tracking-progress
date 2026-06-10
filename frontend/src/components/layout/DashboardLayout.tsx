@@ -26,6 +26,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getSocket } from '@/lib/socket';
 import { Socket } from 'socket.io-client';
 import DialogModal from '@/components/ui/DialogModal';
+import GlobalSearchModal from '@/components/ui/GlobalSearchModal';
 
 interface NavItem {
   name: string;
@@ -63,6 +64,9 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
   const [toastNotification, setToastNotification] = useState<Notification | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
+
+  // Search State
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
@@ -146,15 +150,14 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
 
       socket.emit('join', user.id);
 
-      // Clean up previous listeners to prevent duplicates during fast refreshes
-      socket.off('new_message');
-      socket.off('new_notification');
+      const handleNewMessage = (msg: any) => {
+        // Do not show a notification for messages sent by the user themselves
+        if (msg.sender_id === user.id) return;
 
-      socket.on('new_message', (msg: any) => {
         const newNotif: Notification = {
           id: Date.now(), // Local temporary ID
           title: `New message from ${msg.sender_name || 'User'}`,
-          message: msg.content,
+          message: msg.content || 'Attachment',
           type: 'message',
           is_read: false,
           created_at: new Date().toISOString()
@@ -168,9 +171,9 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
         setNotifications(prev => [newNotif, ...prev]);
         setToastNotification(newNotif);
         setTimeout(() => setToastNotification(null), 5000);
-      });
+      };
 
-      socket.on('new_notification', (notif: Notification) => {
+      const handleNewNotification = (notif: Notification) => {
         // Show browser notification if permitted
         if ('Notification' in window && window.Notification.permission === 'granted') {
           new window.Notification(notif.title, { body: notif.message });
@@ -179,13 +182,16 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
         setNotifications(prev => [notif, ...prev]);
         setToastNotification(notif);
         setTimeout(() => setToastNotification(null), 5000);
-      });
+      };
+
+      socket.on('new_message', handleNewMessage);
+      socket.on('new_notification', handleNewNotification);
       
       return () => {
         clearInterval(interval);
         document.removeEventListener('mousedown', handleClickOutside);
-        socket.off('new_message');
-        socket.off('new_notification');
+        socket.off('new_message', handleNewMessage);
+        socket.off('new_notification', handleNewNotification);
       };
     }
   }, [user, isLoading, router, fetchNotifications]);
@@ -195,6 +201,18 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
     if ('Notification' in window && window.Notification.permission === 'default') {
       window.Notification.requestPermission();
     }
+  }, []);
+
+  // Global search shortcut (CMD+K or CTRL+K)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setIsSearchOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
   if (isLoading || !user) {
@@ -550,7 +568,10 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
             <h2 className="text-xl font-bold tracking-tight text-gray-900 mr-8">
               {portalTitle}
             </h2>
-            <button className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-gray-100/80 hover:bg-gray-200/80 text-gray-500 rounded-lg text-sm transition-colors border border-gray-200/50 w-64 max-w-xs group shadow-sm">
+            <button 
+              onClick={() => setIsSearchOpen(true)}
+              className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-gray-100/80 hover:bg-gray-200/80 text-gray-500 rounded-lg text-sm transition-colors border border-gray-200/50 w-64 max-w-xs group shadow-sm"
+            >
               <MagnifyingGlassIcon className="h-4 w-4 text-gray-400 group-hover:text-gray-500" />
               <span className="flex-1 text-left text-sm">Search anywhere...</span>
               <kbd className="hidden sm:inline-block px-1.5 py-0.5 text-[10px] font-semibold text-gray-500 bg-white border border-gray-200 rounded shadow-sm">⌘K</kbd>
@@ -665,6 +686,13 @@ const DashboardLayout = ({ children, navItems, title }: DashboardLayoutProps) =>
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Global Search Modal */}
+      <GlobalSearchModal 
+        isOpen={isSearchOpen} 
+        onClose={() => setIsSearchOpen(false)} 
+        navItems={navItems} 
+      />
     </div>
   );
 };

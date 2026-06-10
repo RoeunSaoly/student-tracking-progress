@@ -36,6 +36,8 @@ const AssignmentDetail = ({ id }: { id: string }) => {
     open: false, type: 'error', title: '', message: ''
   });
 
+  const isArchived = assignment?.class_is_active === 0 || assignment?.class_is_active === false;
+
   useEffect(() => {
     fetchData();
   }, [id]);
@@ -112,9 +114,16 @@ const AssignmentDetail = ({ id }: { id: string }) => {
             <div className="bg-white rounded-md p-10 shadow-sm border border-gray-100">
               <div className="flex justify-between items-start mb-8">
                 <div>
-                  <span className="bg-blue-50 text-blue-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest mb-4 inline-block">
-                    {assignment.class_name || 'Assignment'}
-                  </span>
+                  <div className="flex items-center gap-2 mb-4">
+                    <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest inline-block ${isArchived ? 'bg-gray-500 text-white shadow-gray-100' : 'bg-blue-50 text-blue-600'}`}>
+                      {assignment.class_name || 'Assignment'}
+                    </span>
+                    {isArchived && (
+                      <span className="bg-gray-500 text-white px-3 py-1.5 rounded-full text-[10px] font-black tracking-widest uppercase shadow-lg shadow-gray-100">
+                        Archived
+                      </span>
+                    )}
+                  </div>
                   <h1 className="text-3xl font-black text-gray-900 tracking-tight">{assignment.title}</h1>
                 </div>
                 <div className="text-right bg-gray-50 px-6 py-3 rounded-md border border-gray-100">
@@ -222,69 +231,89 @@ const AssignmentDetail = ({ id }: { id: string }) => {
           </div>
 
           <div className="lg:col-span-4">
-            <div className="bg-white rounded-md p-8 shadow-sm border border-gray-100 sticky top-8">
-              <h3 className="text-lg font-black text-gray-800 mb-6 uppercase tracking-tight">
-                {mySubmission ? 'Resubmit Assignment' : 'Submit Work'}
-              </h3>
-              
-              <form onSubmit={handleFileUpload} className="space-y-6">
-                <div className="border-2 border-dashed border-gray-100 rounded-md p-8 text-center hover:border-blue-500 transition-all group relative bg-gray-50/30">
-                  {!file ? (
-                    <label className="cursor-pointer block py-4">
-                      <CloudArrowUpIcon className="h-12 w-12 mx-auto text-gray-300 group-hover:text-blue-500 transition-colors mb-4" />
-                      <p className="text-xs font-bold text-gray-500">Drag or click to upload</p>
-                      <p className="text-[10px] text-gray-400 mt-1">PDF, DOCX, ZIP (Max 10MB)</p>
-                      <input 
-                        type="file" 
-                        className="hidden" 
-                        onChange={(e) => setFile(e.target.files?.[0] || null)}
-                      />
-                    </label>
-                  ) : (
-                    <div className="flex items-center gap-4 bg-white p-4 rounded-md text-left border border-blue-100 shadow-sm">
-                      <div className="p-3 bg-blue-50 text-blue-600 rounded-md">
-                        <DocumentIcon className="h-6 w-6 shrink-0" />
+            {!isArchived ? (
+              <div className="bg-white rounded-md p-8 shadow-sm border border-gray-100 sticky top-8">
+                <h3 className="text-lg font-black text-gray-800 mb-6 uppercase tracking-tight">
+                  {mySubmission ? 'Resubmit Assignment' : 'Submit Work'}
+                </h3>
+                
+                <form onSubmit={handleFileUpload} className="space-y-6">
+                  <div className="border-2 border-dashed border-gray-100 rounded-md p-8 text-center hover:border-blue-500 transition-all group relative bg-gray-50/30">
+                    {!file ? (
+                      <label className="cursor-pointer block py-4">
+                        <CloudArrowUpIcon className="h-12 w-12 mx-auto text-gray-300 group-hover:text-blue-500 transition-colors mb-4" />
+                        <p className="text-xs font-bold text-gray-500">Drag or click to upload</p>
+                        <p className="text-[10px] text-gray-400 mt-1">PDF, DOCX, ZIP (Max 10MB)</p>
+                        <input 
+                          type="file" 
+                          className="hidden" 
+                          onChange={(e) => setFile(e.target.files?.[0] || null)}
+                        />
+                      </label>
+                    ) : (
+                      <div className="flex items-center gap-4 bg-white p-4 rounded-md text-left border border-blue-100 shadow-sm">
+                        <div className="p-3 bg-blue-50 text-blue-600 rounded-md">
+                          <DocumentIcon className="h-6 w-6 shrink-0" />
+                        </div>
+                        <div className="overflow-hidden flex-1">
+                          <p className="text-xs font-black text-gray-800 truncate">{file.name}</p>
+                          <p className="text-[10px] font-bold text-gray-400">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
+                        </div>
+                        <button 
+                          type="button" 
+                          onClick={() => setFile(null)}
+                          className="p-1 hover:bg-gray-100 rounded-full transition-colors"
+                        >
+                          <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
                       </div>
-                      <div className="overflow-hidden flex-1">
-                        <p className="text-xs font-black text-gray-800 truncate">{file.name}</p>
-                        <p className="text-[10px] font-bold text-gray-400">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                      </div>
-                      <button 
-                        type="button" 
-                        onClick={() => setFile(null)}
-                        className="p-1 hover:bg-gray-100 rounded-full transition-colors"
-                      >
-                        <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                      </button>
-                    </div>
-                  )}
-                </div>
-
-                <button 
-                  type="submit"
-                  disabled={!file || submitting}
-                  className={`w-full py-5 rounded-md bg-gray-900 text-white font-black transition-all shadow-xl shadow-gray-200 text-sm uppercase tracking-widest
-                    ${(!file || submitting) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600 hover:shadow-blue-200 active:scale-95'}`}
-                >
-                  {submitting ? 'Processing...' : mySubmission ? 'Resubmit Assignment' : 'Submit Assignment'}
-                </button>
-              </form>
-
-              <div className="mt-10 pt-8 border-t border-gray-50">
-                <div className="flex items-center gap-4">
-                  <div className={`h-10 w-10 rounded-full flex items-center justify-center 
-                    ${mySubmission ? 'bg-green-50 text-green-500' : 'bg-gray-50 text-gray-300'}`}>
-                    <CheckCircleIcon className="h-6 w-6" />
+                    )}
                   </div>
-                  <div>
-                    <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Status</p>
-                    <p className="text-sm font-bold text-gray-800">
-                      {mySubmission ? (mySubmission.status === 'graded' ? 'Graded' : 'Submitted') : 'Not Submitted'}
-                    </p>
+
+                  <button 
+                    type="submit"
+                    disabled={!file || submitting}
+                    className={`w-full py-5 rounded-md bg-gray-900 text-white font-black transition-all shadow-xl shadow-gray-200 text-sm uppercase tracking-widest
+                      ${(!file || submitting) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-600 hover:shadow-blue-200 active:scale-95'}`}
+                  >
+                    {submitting ? 'Processing...' : mySubmission ? 'Resubmit Assignment' : 'Submit Assignment'}
+                  </button>
+                </form>
+
+                <div className="mt-10 pt-8 border-t border-gray-50">
+                  <div className="flex items-center gap-4">
+                    <div className={`h-10 w-10 rounded-full flex items-center justify-center 
+                      ${mySubmission ? 'bg-green-50 text-green-500' : 'bg-gray-50 text-gray-300'}`}>
+                      <CheckCircleIcon className="h-6 w-6" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Status</p>
+                      <p className="text-sm font-bold text-gray-800">
+                        {mySubmission ? (mySubmission.status === 'graded' ? 'Graded' : 'Submitted') : 'Not Submitted'}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              <div className="bg-white rounded-md p-8 shadow-sm border border-gray-100 sticky top-8 text-center border-t-4 border-t-gray-400">
+                 <DocumentIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                 <h3 className="text-lg font-black text-gray-800 mb-2 uppercase tracking-tight">Archived Class</h3>
+                 <p className="text-gray-500 font-medium text-sm">This assignment belongs to an archived class. Submissions are no longer accepted.</p>
+                 <div className="mt-6 pt-6 border-t border-gray-50 flex items-center justify-center gap-4">
+                    <div className={`h-10 w-10 rounded-full flex items-center justify-center 
+                      ${mySubmission ? 'bg-green-50 text-green-500' : 'bg-gray-50 text-gray-300'}`}>
+                      <CheckCircleIcon className="h-6 w-6" />
+                    </div>
+                    <div className="text-left">
+                      <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none mb-1">Status</p>
+                      <p className="text-sm font-bold text-gray-800">
+                        {mySubmission ? (mySubmission.status === 'graded' ? 'Graded' : 'Submitted') : 'Not Submitted'}
+                      </p>
+                    </div>
+                  </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -20,9 +20,11 @@ import DialogModal from '@/components/ui/DialogModal';
 import Link from 'next/link';
 import { assignmentService, Assignment, Submission } from '../../../services/assignmentService';
 import { useNavItems } from '@/hooks/useNavItems';
+import { useAuth } from '@/context/AuthContext';
 
 const GradingPanel = ({ assignmentId }: { assignmentId: string }) => {
   const navItems = useNavItems();
+  const { user } = useAuth();
   const [assignment, setAssignment] = useState<Assignment | null>(null);
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
@@ -36,6 +38,8 @@ const GradingPanel = ({ assignmentId }: { assignmentId: string }) => {
   const [dialog, setDialog] = useState<{ open: boolean; type: 'success' | 'error'; title: string; message: string }>({
     open: false, type: 'error', title: '', message: ''
   });
+
+  const isArchived = assignment?.class_is_active === 0 || assignment?.class_is_active === false;
 
   useEffect(() => {
     fetchData();
@@ -83,15 +87,22 @@ const GradingPanel = ({ assignmentId }: { assignmentId: string }) => {
   };
 
   return (
-    <DashboardLayout navItems={navItems} title="Instructor Portal">
+    <DashboardLayout navItems={navItems} title={user?.role === 'admin' ? "Admin Portal" : "Instructor Portal"}>
       <div className="mb-8">
-        <Link href="/teacher/assignments" className="flex items-center gap-2 text-sm font-bold text-blue-600 hover:underline mb-4 w-fit">
+        <Link href={user?.role === 'admin' ? "/admin/assignments" : "/teacher/assignments"} className="flex items-center gap-2 text-sm font-bold text-blue-600 hover:underline mb-4 w-fit">
           <ChevronLeftIcon className="h-4 w-4" />
           Back to Assignments
         </Link>
         <div className="flex justify-between items-end">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800 uppercase tracking-tight">Assignment Submissions</h1>
+            <div className="flex items-center gap-3">
+              <h1 className="text-2xl font-bold text-gray-800 uppercase tracking-tight">Assignment Submissions</h1>
+              {isArchived && (
+                <span className="bg-gray-500 text-white px-3 py-1 rounded-md text-[10px] font-black tracking-widest uppercase shadow-lg shadow-gray-100">
+                  Archived Class
+                </span>
+              )}
+            </div>
             <p className="text-gray-500 font-medium">{assignment ? `${assignment.title} • Max ${assignment.max_score} pts` : 'Loading assignment...'}</p>
           </div>
           <div className="flex gap-4">
@@ -165,13 +176,15 @@ const GradingPanel = ({ assignmentId }: { assignmentId: string }) => {
                         >
                           <EyeIcon className="h-5 w-5" />
                         </a>
-                        <button 
-                          onClick={() => handleOpenGrading(sub)}
-                          className="px-4 py-2.5 bg-gray-900 text-white rounded-md text-xs font-bold hover:bg-blue-600 transition-all shadow-lg shadow-gray-100 flex items-center gap-2"
-                        >
-                          <PencilSquareIcon className="h-4 w-4" />
-                          {sub.status === 'graded' ? 'Edit Grade' : 'Grade'}
-                        </button>
+                        {!isArchived && (
+                          <button 
+                            onClick={() => handleOpenGrading(sub)}
+                            className="px-4 py-2.5 bg-gray-900 text-white rounded-md text-xs font-bold hover:bg-blue-600 transition-all shadow-lg shadow-gray-100 flex items-center gap-2"
+                          >
+                            <PencilSquareIcon className="h-4 w-4" />
+                            {sub.status === 'graded' ? 'Edit Grade' : 'Grade'}
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>
