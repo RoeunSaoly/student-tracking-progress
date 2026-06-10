@@ -137,6 +137,11 @@ const AssignmentView = () => {
                         <span className={`text-[10px] font-black uppercase tracking-widest ${deadline.color}`}>
                           {deadline.label}
                         </span>
+                        {(item.class_is_active === 0 || item.class_is_active === false) && (
+                          <span className="text-[10px] font-black uppercase tracking-widest text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">
+                            Archived
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -154,21 +159,27 @@ const AssignmentView = () => {
                         <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest">
                           Submitted
                         </span>
-                        <button 
-                          onClick={() => handleSubmitClick(item)}
-                          className="block text-[10px] text-gray-400 font-bold uppercase mt-2 hover:text-blue-600"
-                        >
-                          Update File
-                        </button>
+                        {(item.class_is_active !== 0 && item.class_is_active !== false) && (
+                          <button 
+                            onClick={() => handleSubmitClick(item)}
+                            className="block text-[10px] text-gray-400 font-bold uppercase mt-2 hover:text-blue-600 text-right w-full"
+                          >
+                            Update File
+                          </button>
+                        )}
                       </div>
                     ) : (
-                      <button 
-                        onClick={() => handleSubmitClick(item)}
-                        className="w-full md:w-auto bg-gray-900 text-white px-6 py-2.5 rounded-md text-xs font-bold hover:bg-blue-600 transition-all flex items-center justify-center gap-2"
-                      >
-                        <CloudArrowUpIcon className="h-4 w-4" />
-                        Submit
-                      </button>
+                      (item.class_is_active !== 0 && item.class_is_active !== false) ? (
+                        <button 
+                          onClick={() => handleSubmitClick(item)}
+                          className="w-full md:w-auto bg-gray-900 text-white px-6 py-2.5 rounded-md text-xs font-bold hover:bg-blue-600 transition-all flex items-center justify-center gap-2"
+                        >
+                          <CloudArrowUpIcon className="h-4 w-4" />
+                          Submit
+                        </button>
+                      ) : (
+                        <span className="text-xs font-bold text-gray-500 uppercase">Not Submitted</span>
+                      )
                     )}
                   </div>
                 </div>

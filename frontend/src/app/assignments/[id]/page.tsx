@@ -22,7 +22,7 @@ export default function AssignmentIdPage() {
     return <div className="flex h-screen items-center justify-center font-bold text-gray-400">Loading assignment...</div>;
   }
 
-  if (user.role === 'teacher') {
+  if (user.role === 'teacher' || user.role === 'admin') {
     return <GradingPanel assignmentId={id} />;
   }
 

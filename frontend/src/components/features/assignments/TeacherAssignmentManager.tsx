@@ -82,11 +82,13 @@ const AssignmentManager = () => {
         description: '',
         due_date: '',
         max_score: 100,
-        class_id: classes[0]?.id || ''
+        class_id: activeClasses[0]?.id || ''
       });
     }
     setIsModalOpen(true);
   };
+
+  const activeClasses = classes.filter(c => c.is_active !== 0 && c.is_active !== false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -230,20 +232,24 @@ const AssignmentManager = () => {
                           >
                             <ChevronRightIcon className="h-5 w-5" />
                           </Link>
-                          <button 
-                            onClick={() => handleOpenModal(item)}
-                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
-                            title="Edit"
-                          >
-                            <PencilIcon className="h-5 w-5" />
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(item.id)}
-                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                            title="Delete"
-                          >
-                            <TrashIcon className="h-5 w-5" />
-                          </button>
+                          {(item.class_is_active !== 0 && item.class_is_active !== false) && (
+                            <>
+                              <button 
+                                onClick={() => handleOpenModal(item)}
+                                className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-md transition-colors"
+                                title="Edit"
+                              >
+                                <PencilIcon className="h-5 w-5" />
+                              </button>
+                              <button 
+                                onClick={() => handleDelete(item.id)}
+                                className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                title="Delete"
+                              >
+                                <TrashIcon className="h-5 w-5" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -269,7 +275,7 @@ const AssignmentManager = () => {
               onChange={(e) => setFormData({...formData, class_id: e.target.value})}
               required
             >
-              {classes.map(c => (
+              {activeClasses.map(c => (
                 <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>

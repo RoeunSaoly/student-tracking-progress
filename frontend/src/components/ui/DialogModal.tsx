@@ -20,6 +20,7 @@ interface DialogModalProps {
   type?: DialogType;
   confirmText?: string;
   cancelText?: string;
+  children?: ReactNode;
 }
 
 const iconMap: Record<DialogType, ReactNode> = {
@@ -44,7 +45,8 @@ const confirmBtnMap: Record<DialogType, string> = {
   warning: 'bg-amber-600 hover:bg-amber-700 shadow-amber-200',
   info: 'bg-blue-600 hover:bg-blue-700 shadow-blue-200',
   confirm: 'bg-red-600 hover:bg-red-700 shadow-red-200',
-};
+  danger: 'bg-red-600 hover:bg-red-700 shadow-red-200',
+} as Record<string, string>;
 
 const DialogModal = ({
   isOpen,
@@ -55,6 +57,7 @@ const DialogModal = ({
   type = 'info',
   confirmText = 'OK',
   cancelText = 'Cancel',
+  children
 }: DialogModalProps) => {
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -72,7 +75,7 @@ const DialogModal = ({
 
   if (!isOpen) return null;
 
-  const isConfirm = type === 'confirm';
+  const isConfirm = type === 'confirm' || type === 'danger';
 
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -91,13 +94,18 @@ const DialogModal = ({
 
         {/* Icon + content */}
         <div className="p-8 text-center">
-          <div className={`inline-flex items-center justify-center h-20 w-20 rounded-full ${bgMap[type]} mb-5 mx-auto`}>
-            {iconMap[type]}
+          <div className={`inline-flex items-center justify-center h-20 w-20 rounded-full ${bgMap[type] || 'bg-red-50'} mb-5 mx-auto`}>
+            {iconMap[type] || <ExclamationTriangleIcon className="h-10 w-10 text-red-500" />}
           </div>
           {title && (
             <h3 className="text-xl font-black text-gray-900 mb-2">{title}</h3>
           )}
           <p className="text-gray-500 font-medium leading-relaxed">{message}</p>
+          {children && (
+            <div className="mt-4">
+              {children}
+            </div>
+          )}
         </div>
 
         {/* Buttons */}

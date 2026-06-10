@@ -41,6 +41,8 @@ export default function ClassDetailPage() {
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
   const [selectedAssignmentTitle, setSelectedAssignmentTitle] = useState<string>('');
 
+  const isArchived = classData?.is_active === 0 || classData?.is_active === false;
+
   const getAssetUrl = (path: string) => {
     if (!path) return '';
     if (path.startsWith('http')) return path;
@@ -133,8 +135,8 @@ export default function ClassDetailPage() {
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <div className="flex items-center gap-3 mb-4">
-              <span className="bg-blue-600 text-white px-4 py-1.5 rounded-md text-xs font-black tracking-widest uppercase shadow-lg shadow-blue-100">
-                Active Class
+              <span className={`px-4 py-1.5 rounded-md text-xs font-black tracking-widest uppercase shadow-lg ${isArchived ? 'bg-gray-500 text-white shadow-gray-100' : 'bg-blue-600 text-white shadow-blue-100'}`}>
+                {isArchived ? 'Archived Class' : 'Active Class'}
               </span>
               <span className="bg-gray-900 text-white px-4 py-1.5 rounded-md text-xs font-mono font-bold tracking-widest uppercase">
                 CODE: {classData?.code}
@@ -189,7 +191,7 @@ export default function ClassDetailPage() {
               <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
                 <div className="p-6 border-b border-gray-50 flex justify-between items-center">
                   <h3 className="font-bold text-gray-800">Enrolled Students ({tabData.length})</h3>
-                  {user?.role === 'teacher' && (
+                  {(user?.role === 'teacher' || user?.role === 'admin') && !isArchived && (
                     <button 
                       onClick={() => setIsInviteModalOpen(true)}
                       className="text-blue-600 text-sm font-bold hover:underline flex items-center gap-1"
@@ -206,7 +208,7 @@ export default function ClassDetailPage() {
                         <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Student</th>
                         <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Joined Date</th>
                         <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                        {user?.role === 'teacher' && <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>}
+                        {(user?.role === 'teacher' || user?.role === 'admin') && <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-gray-50">
@@ -231,7 +233,7 @@ export default function ClassDetailPage() {
                               {student.status || 'Active'}
                             </span>
                           </td>
-                          {user?.role === 'teacher' && (
+                          {(user?.role === 'teacher' || user?.role === 'admin') && !isArchived && (
                             <td className="px-6 py-4 text-right">
                               <button className="p-2 text-gray-400 hover:text-red-600 transition-colors">
                                 <UserMinusIcon className="h-5 w-5" />
@@ -254,7 +256,7 @@ export default function ClassDetailPage() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center mb-6">
                   <h3 className="text-xl font-bold text-gray-800">Assignments</h3>
-                  {user?.role === 'teacher' && (
+                  {(user?.role === 'teacher' || user?.role === 'admin') && !isArchived && (
                     <button 
                       onClick={() => setIsCreateAssignmentOpen(true)}
                       className="flex items-center gap-2 bg-blue-600 text-white px-5 py-2.5 rounded-md font-bold hover:bg-blue-700 transition-all shadow-lg shadow-blue-100"
@@ -279,20 +281,22 @@ export default function ClassDetailPage() {
                         </div>
                       </div>
                     </div>
-                    <button 
-                      onClick={() => {
-                        if (user?.role === 'student') {
-                          setSelectedAssignmentId(assignment.id);
-                          setSelectedAssignmentTitle(assignment.title);
-                        } else {
-                          // Handle teacher "Submissions" logic (e.g. redirect to grading page)
-                          router.push(`/assignments/${assignment.id}`);
-                        }
-                      }}
-                      className="px-6 py-2 rounded-md bg-gray-50 text-gray-600 text-sm font-bold hover:bg-gray-900 hover:text-white transition-all"
-                    >
-                      {user?.role === 'teacher' ? 'Submissions' : 'Submit'}
-                    </button>
+                    {(user?.role === 'teacher' || user?.role === 'admin' || (!isArchived && user?.role === 'student')) && (
+                      <button 
+                        onClick={() => {
+                          if (user?.role === 'student') {
+                            setSelectedAssignmentId(assignment.id);
+                            setSelectedAssignmentTitle(assignment.title);
+                          } else {
+                            // Handle teacher/admin "Submissions" logic
+                            router.push(`/assignments/${assignment.id}`);
+                          }
+                        }}
+                        className="px-6 py-2 rounded-md bg-gray-50 text-gray-600 text-sm font-bold hover:bg-gray-900 hover:text-white transition-all"
+                      >
+                        {(user?.role === 'teacher' || user?.role === 'admin') ? 'Submissions' : 'Submit'}
+                      </button>
+                    )}
                   </div>
                 )) : (
                   <div className="bg-white rounded-md p-20 text-center border border-dashed border-gray-200">
@@ -307,7 +311,7 @@ export default function ClassDetailPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div className="md:col-span-2 lg:col-span-3 flex justify-between items-center mb-4">
                   <h3 className="text-xl font-bold text-gray-800">Learning Materials</h3>
-                  {user?.role === 'teacher' && (
+                  {(user?.role === 'teacher' || user?.role === 'admin') && !isArchived && (
                     <button 
                       onClick={() => setIsUploadMaterialOpen(true)}
                       className="flex items-center gap-2 bg-indigo-600 text-white px-5 py-2.5 rounded-md font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
@@ -323,7 +327,7 @@ export default function ClassDetailPage() {
                       <div className="h-12 w-12 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center">
                         <BookOpenIcon className="h-6 w-6" />
                       </div>
-                      {user?.role === 'teacher' && (
+                      {(user?.role === 'teacher' || user?.role === 'admin') && !isArchived && (
                         <button className="p-2 text-gray-300 hover:text-red-500 transition-colors">
                           <TrashIcon className="h-5 w-5" />
                         </button>
@@ -372,7 +376,7 @@ export default function ClassDetailPage() {
         />
       )}
 
-      {user?.role === 'teacher' && (
+      {(user?.role === 'teacher' || user?.role === 'admin') && (
         <CreateAssignmentModal
           isOpen={isCreateAssignmentOpen}
           onClose={() => setIsCreateAssignmentOpen(false)}
@@ -381,7 +385,7 @@ export default function ClassDetailPage() {
         />
       )}
 
-      {user?.role === 'teacher' && (
+      {(user?.role === 'teacher' || user?.role === 'admin') && (
         <UploadMaterialModal
           isOpen={isUploadMaterialOpen}
           onClose={() => setIsUploadMaterialOpen(false)}

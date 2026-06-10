@@ -265,7 +265,7 @@ cd student-progress-tracker
 
 # Running with Docker
 
-Build and start containers:
+Build and start containers:....
 
 
 docker-compose up --build

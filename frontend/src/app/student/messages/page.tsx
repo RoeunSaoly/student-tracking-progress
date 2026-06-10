@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { 
   HomeIcon, 
   BookOpenIcon, 
@@ -12,14 +12,15 @@ import {
   PaperClipIcon,
   FaceSmileIcon,
   MicrophoneIcon,
-  UserCircleIcon,
   XMarkIcon,
-  ArrowUturnLeftIcon
+  ArrowUturnLeftIcon,
+  TrashIcon
 } from '@heroicons/react/24/outline';
 import { 
   CheckIcon as CheckSolidIcon,
 } from '@heroicons/react/24/solid';
 import DashboardLayout from '@/components/layout/DashboardLayout';
+import DialogModal from '@/components/ui/DialogModal';
 import { useNavItems } from '@/hooks/useNavItems';
 import api from '@/lib/axios';
 import { useAuth } from '@/context/AuthContext';
@@ -31,6 +32,7 @@ interface TeacherContact {
   id: number;
   name: string;
   className: string;
+  avatar_url?: string;
 }
 
 interface Message {
@@ -39,6 +41,7 @@ interface Message {
   receiver_id: number;
   content: string;
   created_at: string;
+  is_read?: boolean;
   sender_name?: string;
   receiver_name?: string;
   media_url?: string;
@@ -48,6 +51,8 @@ interface Message {
   reply_media_url?: string;
   reply_media_type?: string;
   reply_sender_name?: string;
+  is_deleted_for_everyone?: boolean;
+  reply_is_deleted_for_everyone?: boolean;
 }
 
 export default function StudentMessagesPage() {
@@ -65,6 +70,13 @@ export default function StudentMessagesPage() {
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  
+  // Delete Modal States
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteType, setDeleteType] = useState<'message' | 'conversation' | null>(null);
+  const [messageToDelete, setMessageToDelete] = useState<number | null>(null);
+  const [deleteScope, setDeleteScope] = useState<'me' | 'everyone'>('me');
+  const [highlightedMessageId, setHighlightedMessageId] = useState<number | null>(null);
   
   const chatBottomRef = useRef<HTMLDivElement>(null);
   const socketRef = useRef<Socket | null>(null);
@@ -91,8 +103,9 @@ export default function StudentMessagesPage() {
             if (c.teacher_id && c.teacher_name) {
               teacherMap.set(c.teacher_id, {
                 id: c.teacher_id,
-                name: c.teacher_name,
-                className: c.name
+                name: c.teacher_first ? `${c.teacher_first} ${c.teacher_last}` : c.teacher_name,
+                className: c.name,
+                avatar_url: c.teacher_avatar_url
               });
             }
           });
@@ -160,12 +173,38 @@ export default function StudentMessagesPage() {
 
     socket.emit('join', user.id);
 
-    // Clean up previous listeners
-    socket.off('new_message');
+    const handleNewMessage = (msg: Message) => {
+      const activeId = selectedContactRef.current;
+      const isActiveConversation = 
+        (activeId === Number(msg.sender_id)) || 
+        (activeId === Number(msg.receiver_id) && user?.id === Number(msg.sender_id));
 
-    socket.on('new_message', (msg: Message) => {
-      if (selectedContactRef.current === msg.sender_id) {
+      if (isActiveConversation) {
         setMessages(prev => {
+          // Prevent duplicates if the message is already in state
+          if (prev.some(m => m.id === msg.id)) return prev;
+
+          // Smart deduplication for optimistic updates
+          if (Number(msg.sender_id) === user?.id) {
+            // Find a temporary message (ID from Date.now() is huge) that matches content
+            const tempMsgIdx = prev.findIndex(m => 
+              m.id > 1000000000000 && 
+              m.content === msg.content && 
+              Number(m.receiver_id) === Number(msg.receiver_id)
+            );
+            
+            if (tempMsgIdx > -1) {
+              const newMessages = [...prev];
+              newMessages[tempMsgIdx] = {
+                ...newMessages[tempMsgIdx],
+                ...msg,
+                reply_content: newMessages[tempMsgIdx].reply_content,
+                reply_sender_name: newMessages[tempMsgIdx].reply_sender_name
+              };
+              return newMessages;
+            }
+          }
+
           if (msg.reply_to_id && !msg.reply_content) {
             const repliedMsg = prev.find(m => m.id === msg.reply_to_id);
             if (repliedMsg) {
@@ -175,12 +214,13 @@ export default function StudentMessagesPage() {
           }
           return [...prev, msg];
         });
-      } else {
+      } else if (Number(msg.sender_id) !== user?.id) {
         console.log("New message from", msg.sender_id);
       }
 
       setContacts(prev => {
-        const idx = prev.findIndex(c => c.id === msg.sender_id);
+        const contactIdToBump = Number(msg.sender_id) === user?.id ? Number(msg.receiver_id) : Number(msg.sender_id);
+        const idx = prev.findIndex(c => c.id === contactIdToBump);
         if (idx > -1) {
           const contact = prev[idx];
           const newContacts = [...prev];
@@ -190,10 +230,38 @@ export default function StudentMessagesPage() {
         }
         return prev;
       });
-    });
+    };
+
+    const handleMessageDeleted = (data: { messageId: number }) => {
+      setMessages(prev => prev.map(m => 
+        m.id === data.messageId ? { ...m, is_deleted_for_everyone: true, content: '', media_url: undefined, media_type: undefined } : m
+      ));
+    };
+
+    const handleConversationDeleted = (data: { contactId: number }) => {
+      if (selectedContactRef.current === data.contactId) {
+        setMessages([]);
+      }
+    };
+
+    const handleMessagesRead = (data: { reader_id: number, contact_id: number }) => {
+      if (selectedContactRef.current === data.reader_id) {
+        setMessages(prev => prev.map(m => 
+          m.sender_id === user?.id ? { ...m, is_read: true } : m
+        ));
+      }
+    };
+
+    socket.on('new_message', handleNewMessage);
+    socket.on('message_deleted', handleMessageDeleted);
+    socket.on('conversation_deleted', handleConversationDeleted);
+    socket.on('messages_read', handleMessagesRead);
 
     return () => {
-      socket.off('new_message');
+      socket.off('new_message', handleNewMessage);
+      socket.off('message_deleted', handleMessageDeleted);
+      socket.off('conversation_deleted', handleConversationDeleted);
+      socket.off('messages_read', handleMessagesRead);
     };
   }, [user]);
 
@@ -222,32 +290,38 @@ export default function StudentMessagesPage() {
         formData.append('reply_to_id', replyingTo.id.toString());
       }
       
+      // Optimistic append for immediate UI feedback (feels real-time for sender)
+      const tempId = Date.now();
+      const localMsg: Message = {
+        id: tempId,
+        sender_id: user?.id || 0,
+        receiver_id: selectedContact.id,
+        content: newMessage.trim(),
+        created_at: new Date().toISOString(),
+        media_url: selectedFile ? URL.createObjectURL(selectedFile) : undefined,
+        media_type: selectedFile ? selectedFile.type : undefined,
+        reply_to_id: replyingTo ? replyingTo.id : null,
+        reply_content: replyingTo ? replyingTo.content : undefined,
+        reply_media_url: replyingTo ? replyingTo.media_url : undefined,
+        reply_media_type: replyingTo ? replyingTo.media_type : undefined,
+        reply_sender_name: replyingTo ? (replyingTo.sender_id === user?.id ? 'You' : replyingTo.sender_name || selectedContact.name) : undefined
+      };
+      
+      setMessages(prev => [...prev, localMsg]);
+      setNewMessage('');
+      
+      // Store reference to clear later, but clear state now for snappy UI
+      const currentFile = selectedFile;
+      setSelectedFile(null);
+      setReplyingTo(null);
+
       const response = await api.post('/messages', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
       });
       
-      // Instantly append to state for immediate UI feedback
-      const localMsg: Message = {
-        id: response.data.messageId || Date.now(),
-        sender_id: user?.id || 0,
-        receiver_id: selectedContact.id,
-        content: newMessage.trim(),
-        created_at: new Date().toISOString(),
-        media_url: response.data.media_url,
-        media_type: response.data.media_type,
-        reply_to_id: replyingTo ? replyingTo.id : null,
-        reply_content: replyingTo ? replyingTo.content : undefined,
-        reply_media_url: replyingTo ? replyingTo.media_url : undefined,
-        reply_media_type: replyingTo ? replyingTo.media_type : undefined,
-        reply_sender_name: replyingTo ? (replyingTo.sender_id === user?.id ? 'You' : replyingTo.sender_name || selectedContact.username) : undefined
-      };
-      
-      setMessages(prev => [...prev, localMsg]);
-      setNewMessage('');
-      setSelectedFile(null);
-      setReplyingTo(null);
+      // The socket event will arrive shortly and replace the temp message with the real one.
       const textarea = document.getElementById('chat-input-student');
       if (textarea) textarea.style.height = 'auto';
 
@@ -266,6 +340,56 @@ export default function StudentMessagesPage() {
       console.error("Failed to send message", err);
     } finally {
       setSendingMessage(false);
+    }
+  };
+
+  const handleDeleteMessage = (messageId: number) => {
+    setMessageToDelete(messageId);
+    setDeleteType('message');
+    setDeleteScope('me'); // Default to me
+    setDeleteModalOpen(true);
+  };
+
+  const handleDeleteConversation = () => {
+    if (!selectedContact) return;
+    setDeleteType('conversation');
+    setDeleteModalOpen(true);
+  };
+
+  const executeDelete = async () => {
+    if (deleteType === 'message' && messageToDelete !== null) {
+      const id = messageToDelete;
+      try {
+        if (deleteScope === 'everyone') {
+          setMessages(prev => prev.map(m => 
+            m.id === id ? { ...m, is_deleted_for_everyone: true, content: '', media_url: undefined, media_type: undefined } : m
+          ));
+        } else {
+          setMessages(prev => prev.filter(m => m.id !== id));
+        }
+        await api.delete(`/messages/${id}?type=${deleteScope}`);
+      } catch (err) {
+        console.error("Failed to delete message", err);
+      }
+    } else if (deleteType === 'conversation' && selectedContact) {
+      try {
+        setMessages([]);
+        await api.delete(`/messages/conversation/${selectedContact.id}`);
+      } catch (err) {
+        console.error("Failed to delete conversation", err);
+      }
+    }
+    setDeleteModalOpen(false);
+    setMessageToDelete(null);
+    setDeleteType(null);
+  };
+
+  const scrollToMessage = (messageId: number) => {
+    const el = document.getElementById(`message-${messageId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setHighlightedMessageId(messageId);
+      setTimeout(() => setHighlightedMessageId(null), 2000);
     }
   };
 
@@ -314,6 +438,13 @@ export default function StudentMessagesPage() {
   };
 
   const groupedMessages = groupMessagesByDate();
+
+  // Find the ID of the last message sent by the user that has been read
+  const lastReadMessageId = useMemo(() => {
+    const ownMessages = messages.filter(m => m.sender_id === user?.id && m.is_read);
+    if (ownMessages.length === 0) return null;
+    return ownMessages[ownMessages.length - 1].id;
+  }, [messages, user?.id]);
 
   // Filter instructors by search query
   const filteredContacts = contacts.filter(contact => 
@@ -377,11 +508,15 @@ export default function StudentMessagesPage() {
                         ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white shadow-lg shadow-indigo-500/25 border-transparent' 
                         : 'bg-white hover:bg-gray-50 text-gray-700 border-gray-100 hover:border-gray-200 hover:shadow-sm'}`}
                   >
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-lg flex-shrink-0 transition-transform duration-300 group-hover:scale-105
+                    <div className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-lg flex-shrink-0 transition-transform duration-300 group-hover:scale-105 overflow-hidden
                       ${selectedContact?.id === contact.id 
                         ? 'bg-white/20 text-white shadow-inner' 
                         : 'bg-gradient-to-br from-indigo-50 to-violet-50 text-indigo-600'}`}>
-                      {contact.name.charAt(0).toUpperCase()}
+                      {contact.avatar_url ? (
+                        <img src={getMediaUrl(contact.avatar_url)} alt={contact.name} className="h-full w-full object-cover" />
+                      ) : (
+                        contact.name.charAt(0).toUpperCase()
+                      )}
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className={`text-sm font-bold truncate ${selectedContact?.id === contact.id ? 'text-white' : 'text-gray-900'}`}>
@@ -411,8 +546,12 @@ export default function StudentMessagesPage() {
               {/* Active Header */}
               <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white/80 backdrop-blur-md sticky top-0 z-20 shadow-sm">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-violet-500 text-white rounded-xl flex items-center justify-center font-bold text-lg shadow-sm">
-                    {selectedContact.name.charAt(0).toUpperCase()}
+                  <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-violet-500 text-white rounded-full flex items-center justify-center font-bold text-lg shadow-sm overflow-hidden">
+                    {selectedContact.avatar_url ? (
+                      <img src={getMediaUrl(selectedContact.avatar_url)} alt={selectedContact.name} className="h-full w-full object-cover" />
+                    ) : (
+                      selectedContact.name.charAt(0).toUpperCase()
+                    )}
                   </div>
                   <div>
                     <h4 className="font-bold text-gray-900 text-base">{selectedContact.name}</h4>
@@ -420,11 +559,11 @@ export default function StudentMessagesPage() {
                   </div>
                 </div>
                 <button
-                  onClick={() => fetchConversation(selectedContact.id)}
-                  title="Reload chat history"
-                  className="p-2.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-all duration-200 active:scale-95"
+                  onClick={handleDeleteConversation}
+                  title="Delete entire conversation"
+                  className="p-2.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all duration-200 active:scale-95"
                 >
-                  <ArrowPathIcon className={`h-5 w-5 ${loadingMessages ? 'animate-spin text-indigo-600' : ''}`} />
+                  <TrashIcon className="h-5 w-5" />
                 </button>
               </div>
 
@@ -460,63 +599,112 @@ export default function StudentMessagesPage() {
                           {msgs.map((msg, idx) => {
                             const isOwn = msg.sender_id === user?.id;
                             return (
-                              <motion.div 
-                                key={msg.id}
-                                initial={{ opacity: 0, y: 10, originX: isOwn ? 1 : 0 }}
-                                animate={{ opacity: 1, y: 0 }}
-                                transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                                className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
-                              >
-                                <div className={`max-w-[75%] rounded-2xl p-4 text-[15px] leading-relaxed shadow-sm relative group/msg
-                                  ${isOwn 
-                                    ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white rounded-br-sm' 
-                                    : 'bg-white text-gray-800 rounded-bl-sm border border-gray-100 shadow-sm'}`}
+                              <React.Fragment key={msg.id}>
+                                <motion.div 
+                                  initial={{ opacity: 0, y: 10, originX: isOwn ? 1 : 0 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                                  id={`message-${msg.id}`}
+                                  className={`flex ${isOwn ? 'justify-end' : 'justify-start'}`}
                                 >
-                                  <div className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover/msg:opacity-100 transition-opacity ${isOwn ? '-left-12' : '-right-12'}`}>
-                                    <button 
-                                      onClick={() => setReplyingTo(msg)}
-                                      className="p-2 text-gray-400 hover:text-indigo-600 bg-white rounded-full shadow-sm border border-gray-100 transition-colors"
-                                      title="Reply"
-                                    >
-                                      <ArrowUturnLeftIcon className="h-4 w-4" />
-                                    </button>
-                                  </div>
-                                  
-                                  {msg.reply_to_id && (
-                                    <div className={`mb-3 p-2.5 rounded-xl text-sm border-l-4 ${isOwn ? 'bg-indigo-700/30 border-indigo-300 text-indigo-100' : 'bg-gray-50 border-indigo-400 text-gray-600'}`}>
-                                      <p className="font-bold text-xs mb-1 opacity-80">{msg.reply_sender_name}</p>
-                                      <p className="line-clamp-2 leading-snug">{msg.reply_content || 'Attachment'}</p>
-                                    </div>
-                                  )}
-
-                                  {msg.media_url && (
-                                    <div className="mb-2 rounded-lg overflow-hidden border border-white/20">
-                                      {msg.media_type?.startsWith('image/') ? (
-                                        <img src={getMediaUrl(msg.media_url)} alt="Attachment" className="max-w-full h-auto max-h-64 object-cover" />
-                                      ) : msg.media_type?.startsWith('video/') ? (
-                                        <video src={getMediaUrl(msg.media_url)} controls className="max-w-full h-auto max-h-64" />
-                                      ) : (
-                                        <a href={getMediaUrl(msg.media_url)} target="_blank" rel="noreferrer" className="flex items-center gap-2 underline text-sm">
-                                          <PaperClipIcon className="h-4 w-4" /> Download File
-                                        </a>
-                                      )}
-                                    </div>
-                                  )}
-                                  {msg.content && <p className="whitespace-pre-wrap">{msg.content}</p>}
-                                  <div className={`flex items-center justify-end gap-1 mt-2
-                                    ${isOwn ? 'text-indigo-200' : 'text-gray-400'}`}>
-                                    <span className="block text-[10px] font-medium tracking-wide">
-                                      {new Date(msg.created_at).toLocaleTimeString(undefined, {
-                                        hour: '2-digit',
-                                        minute: '2-digit'
-                                      })}
-                                    </span>
-                                    {isOwn && (
-                                      <CheckSolidIcon className="h-3 w-3" />
+                                  <div className={`max-w-[75%] rounded-2xl p-4 text-[15px] leading-relaxed relative group/msg transition-all duration-500
+                                    ${highlightedMessageId === msg.id ? 'ring-4 ring-indigo-400/50 ring-offset-2 scale-[1.02]' : ''}
+                                    ${msg.is_deleted_for_everyone 
+                                      ? 'bg-gray-100 text-gray-500 rounded-br-sm border border-gray-200 italic shadow-none' 
+                                      : isOwn 
+                                        ? 'bg-gradient-to-br from-indigo-600 to-violet-600 text-white rounded-br-sm shadow-sm' 
+                                        : 'bg-white text-gray-800 rounded-bl-sm border border-gray-100 shadow-sm'}`}
+                                  >
+                                    {!msg.is_deleted_for_everyone && (
+                                      <div className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover/msg:opacity-100 transition-opacity flex items-center gap-1 ${isOwn ? '-left-20' : '-right-20'}`}>
+                                        <button 
+                                          onClick={() => handleDeleteMessage(msg.id)}
+                                          className="p-2 text-gray-400 hover:text-red-600 bg-white rounded-full shadow-sm border border-gray-100 transition-colors"
+                                          title="Remove"
+                                        >
+                                          <TrashIcon className="h-4 w-4" />
+                                        </button>
+                                        <button 
+                                          onClick={() => setReplyingTo(msg)}
+                                          className="p-2 text-gray-400 hover:text-indigo-600 bg-white rounded-full shadow-sm border border-gray-100 transition-colors"
+                                          title="Reply"
+                                        >
+                                          <ArrowUturnLeftIcon className="h-4 w-4" />
+                                        </button>
+                                      </div>
                                     )}
+                                    
+                                    {msg.is_deleted_for_everyone ? (
+                                      <p className="whitespace-pre-wrap text-sm">
+                                        {isOwn ? "You unsent a message" : "This message was unsent"}
+                                      </p>
+                                    ) : (
+                                      <>
+                                        {msg.reply_to_id && (
+                                          <div 
+                                            onClick={() => scrollToMessage(msg.reply_to_id!)}
+                                            className={`mb-2.5 px-3 py-2 rounded-xl text-xs flex flex-col gap-0.5 relative overflow-hidden transition-all cursor-pointer
+                                              ${isOwn ? 'bg-black/10 text-white/90 hover:bg-black/20' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
+                                          >
+                                            <div className={`absolute left-0 top-0 bottom-0 w-1 ${isOwn ? 'bg-white/40' : 'bg-indigo-400/60'}`} />
+                                            <span className="font-bold text-[11px] uppercase tracking-wider opacity-90 flex items-center gap-1">
+                                              <ArrowUturnLeftIcon className="h-3 w-3" />
+                                              {msg.reply_sender_name}
+                                            </span>
+                                            <p className="line-clamp-1 pr-2 truncate opacity-80 mt-0.5">
+                                              {msg.reply_is_deleted_for_everyone ? <em>Message unsent</em> : (msg.reply_content || 'Attachment')}
+                                            </p>
+                                          </div>
+                                        )}
+
+                                        {msg.media_url && (
+                                          <div className="mb-2 rounded-lg overflow-hidden border border-white/20">
+                                            {msg.media_type?.startsWith('image/') ? (
+                                              <img src={getMediaUrl(msg.media_url)} alt="Attachment" className="max-w-full h-auto max-h-64 object-cover" />
+                                            ) : msg.media_type?.startsWith('video/') ? (
+                                              <video src={getMediaUrl(msg.media_url)} controls className="max-w-full h-auto max-h-64" />
+                                            ) : (
+                                              <a href={getMediaUrl(msg.media_url)} target="_blank" rel="noreferrer" className="flex items-center gap-2 underline text-sm">
+                                                <PaperClipIcon className="h-4 w-4" /> Download File
+                                              </a>
+                                            )}
+                                          </div>
+                                        )}
+                                        {msg.content && <p className="whitespace-pre-wrap">{msg.content}</p>}
+                                      </>
+                                    )}
+                                    <div className={`flex items-center justify-end gap-1 mt-2
+                                      ${msg.is_deleted_for_everyone ? 'text-gray-400' : isOwn ? 'text-indigo-200' : 'text-gray-400'}`}>
+                                      <span className="block text-[10px] font-medium tracking-wide">
+                                        {new Date(msg.created_at).toLocaleTimeString(undefined, {
+                                          hour: '2-digit',
+                                          minute: '2-digit'
+                                        })}
+                                      </span>
+                                    </div>
                                   </div>
-                                </div>
-                              </motion.div>
+                                </motion.div>
+                                {lastReadMessageId === msg.id && (
+                                  <motion.div 
+                                    initial={{ opacity: 0, scale: 0.8 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className="flex justify-end mt-1 mb-2 pr-1"
+                                  >
+                                    {selectedContact?.avatar_url ? (
+                                      <img 
+                                        src={getMediaUrl(selectedContact.avatar_url)} 
+                                        alt="Seen" 
+                                        className="w-3.5 h-3.5 rounded-full object-cover shadow-sm ring-1 ring-white/50" 
+                                        title="Seen" 
+                                      />
+                                    ) : (
+                                      <div className="w-3.5 h-3.5 rounded-full bg-gray-200 flex items-center justify-center ring-1 ring-white/50" title="Seen">
+                                        <span className="text-[6px] font-bold text-gray-500">{selectedContact?.name?.charAt(0).toUpperCase()}</span>
+                                      </div>
+                                    )}
+                                  </motion.div>
+                                )}
+                              </React.Fragment>
                             );
                           })}
                         </AnimatePresence>
@@ -634,6 +822,58 @@ export default function StudentMessagesPage() {
         </div>
 
       </div>
+
+      <AnimatePresence>
+        {deleteModalOpen && (
+          <DialogModal
+            isOpen={deleteModalOpen}
+            onClose={() => {
+              setDeleteModalOpen(false);
+              setMessageToDelete(null);
+              setDeleteType(null);
+            }}
+            title={deleteType === 'message' ? "Delete Message" : "Delete Conversation"}
+            message={
+              deleteType === 'message' 
+                ? "How would you like to delete this message?" 
+                : `Are you sure you want to permanently delete the entire conversation with ${selectedContact?.name}? This action cannot be undone.`
+            }
+            type="danger"
+            confirmText="Delete"
+            onConfirm={executeDelete}
+          >
+            {deleteType === 'message' && (
+              <div className="flex flex-col gap-3 mt-2 text-left">
+                <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
+                  <input 
+                    type="radio" 
+                    name="deleteScope" 
+                    value="me" 
+                    checked={deleteScope === 'me'} 
+                    onChange={() => setDeleteScope('me')}
+                    className="w-4 h-4 text-indigo-600 focus:ring-indigo-500 border-gray-300"
+                  />
+                  <span className="text-sm font-medium text-gray-700">Delete for me</span>
+                </label>
+                
+                {messages.find(m => m.id === messageToDelete)?.sender_id === user?.id && (
+                  <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50 transition-colors">
+                    <input 
+                      type="radio" 
+                      name="deleteScope" 
+                      value="everyone" 
+                      checked={deleteScope === 'everyone'} 
+                      onChange={() => setDeleteScope('everyone')}
+                      className="w-4 h-4 text-red-600 focus:ring-red-500 border-gray-300"
+                    />
+                    <span className="text-sm font-medium text-red-600">Delete for everyone</span>
+                  </label>
+                )}
+              </div>
+            )}
+          </DialogModal>
+        )}
+      </AnimatePresence>
     </DashboardLayout>
   );
 }

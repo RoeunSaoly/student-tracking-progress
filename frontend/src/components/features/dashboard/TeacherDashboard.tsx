@@ -103,8 +103,8 @@ const TeacherDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
-                  {filteredStudents?.map((student: any) => (
-                    <tr key={student.id} className="group hover:bg-gray-50/80 transition-colors">
+                  {filteredStudents?.map((student: any, index: number) => (
+                    <tr key={`${student.id}-${student.class_id || index}`} className="group hover:bg-gray-50/80 transition-colors">
                       <td className="py-4">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300/50 flex items-center justify-center text-gray-700 font-bold text-sm shadow-sm">
