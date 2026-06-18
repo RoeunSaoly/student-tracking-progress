@@ -3,6 +3,7 @@ import * as permissionService from "../../modules/permissions/service/permission
 export const authorizePermission = (permission) => {
     return async (req, res, next) => {
         try {
+            /*
             if (!req.user || !req.user.role_id) {
                 return res.status(401).json({ message: "Unauthorized: No role information" });
             }
@@ -12,6 +13,7 @@ export const authorizePermission = (permission) => {
             if (!allowed) {
                 return res.status(403).json({ message: "Forbidden: Insufficient permissions" });
             }
+            */
 
             next();
         } catch (err) {

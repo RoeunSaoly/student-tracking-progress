@@ -58,3 +58,7 @@ export const getAssignmentsByUser = async (userId, role) => {
   return [];
 };
 
+export const getAllAssignments = async () => {
+  return await repo.findAllAssignments();
+};
+

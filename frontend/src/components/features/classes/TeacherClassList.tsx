@@ -77,7 +77,7 @@ const ClassList = () => {
   }, []);
 
   return (
-    <DashboardLayout navItems={navItems} title="Instructor Portal">
+      <DashboardLayout navItems={navItems} title="Instructor Portal">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">My Classes</h1>
@@ -180,7 +180,6 @@ const ClassList = () => {
             </div>
           </div>
         ))}
-      </div>
 
       <CreateClassModal 
         isOpen={isCreateOpen} 
