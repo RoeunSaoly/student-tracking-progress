@@ -13,6 +13,11 @@ export const getRecentConversations = async (userId) => {
   return await repo.findRecentConversations(userId);
 };
 
+export const markAsRead = async (senderId, receiverId) => {
+  await repo.markMessagesAsRead(senderId, receiverId);
+  return { success: true };
+};
+
 export const createAnnouncement = async (data) => {
   const announcementId = await repo.createAnnouncement(data);
   return { announcementId };

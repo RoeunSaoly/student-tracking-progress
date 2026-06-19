@@ -53,6 +53,14 @@ export const getRecentConversations = asyncHandler(async (req, res) => {
   res.json(result);
 });
 
+export const markAsRead = asyncHandler(async (req, res) => {
+  const senderId = req.params.senderId;
+  const receiverId = req.user.id;
+  
+  const result = await service.markAsRead(senderId, receiverId);
+  res.json(result);
+});
+
 export const createAnnouncement = asyncHandler(async (req, res) => {
   const result = await service.createAnnouncement({
     ...req.body,

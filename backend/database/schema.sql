@@ -205,11 +205,18 @@ CREATE TABLE messages (
     sender_id INT NOT NULL,
     receiver_id INT NOT NULL,
     message TEXT NOT NULL,
+    media_url VARCHAR(500) NULL,
+    media_type VARCHAR(50) NULL,
+    reply_to_id INT NULL,
     is_read BOOLEAN DEFAULT FALSE,
+    deleted_by_sender BOOLEAN DEFAULT FALSE,
+    deleted_by_receiver BOOLEAN DEFAULT FALSE,
+    is_deleted_for_everyone BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (sender_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (reply_to_id) REFERENCES messages(id) ON DELETE SET NULL
 );
 
 -- =====================================
