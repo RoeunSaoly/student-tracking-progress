@@ -1,5 +1,5 @@
 import { verifyAccessToken } from "../../shared/utils/jwt.js";
-import db from "../../config/db.js";
+import db from "../../database/index.js";
 
 export const authenticate = async (req, res, next) => {
     try {
@@ -20,20 +20,20 @@ export const authenticate = async (req, res, next) => {
             });
         }
 
-        const [users] = await db.query(
-            'SELECT u.id, u.is_active, u.is_deleted, r.name as role FROM users u JOIN roles r ON u.role_id = r.id WHERE u.id = ?', 
-            [decoded.id]
-        );
-        if (users.length === 0) {
+        const user = await db.models.users.findByPk(decoded.id, {
+            include: [{ model: db.models.roles, as: 'role', attributes: ['name'] }]
+        });
+
+        if (!user) {
             return res.status(401).json({ message: "User no longer exists" });
         }
-        if (users[0].is_deleted || !users[0].is_active) {
+        if (user.is_deleted || !user.is_active) {
             return res.status(403).json({ message: "Account is inactive or deleted" });
         }
 
         req.user = {
             ...decoded,
-            role: users[0].role
+            role: user.role?.name
         };
         next();
     } catch (err) {

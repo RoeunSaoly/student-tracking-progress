@@ -1,11 +1,16 @@
-import db from "../../../config/db.js";
+import db from "../../../database/index.js";
 
 export const findPendingTeachers = async () => {
-    const [rows] = await db.query(
-        `SELECT u.id, u.username, u.email, u.created_at
-         FROM users u
-         JOIN roles r ON u.role_id = r.id
-         WHERE r.name = 'teacher' AND u.is_validated = FALSE AND u.is_deleted = FALSE`
-    );
-    return rows;
+    const users = await db.models.users.findAll({
+        where: { is_validated: false, is_deleted: false },
+        include: [{
+            model: db.models.roles,
+            as: 'role',
+            where: { name: 'teacher' },
+            attributes: []
+        }],
+        attributes: ['id', 'username', 'email', 'created_at'],
+        raw: true
+    });
+    return users;
 };

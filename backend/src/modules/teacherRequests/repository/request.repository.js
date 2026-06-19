@@ -1,4 +1,4 @@
-import db from "../../../config/db.js";
+import db from "../../../database/index.js";
 
 export const createTeacherRequest = async (requestData) => {
     const {
@@ -6,56 +6,71 @@ export const createTeacherRequest = async (requestData) => {
         experience_years, previous_workplace, subjects, documents
     } = requestData;
 
-    const [result] = await db.query(
-        `INSERT INTO teacher_requests 
-        (user_id, phone, degree, major, university, graduation_year, experience_years, previous_workplace, subjects, documents) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [
-            user_id, phone, degree, major, university, graduation_year,
-            experience_years, previous_workplace, JSON.stringify(subjects), JSON.stringify(documents)
-        ]
-    );
+    const request = await db.models.teacher_requests.create({
+        user_id, phone, degree, major, university, graduation_year,
+        experience_years, previous_workplace, 
+        subjects: subjects, 
+        documents: documents
+    });
 
-    return result.insertId;
+    return request.id;
 };
 
 export const findRequestByUserId = async (userId) => {
-    const [rows] = await db.query(
-        `SELECT * FROM teacher_requests WHERE user_id = ? ORDER BY created_at DESC LIMIT 1`,
-        [userId]
-    );
-    return rows[0];
+    return await db.models.teacher_requests.findOne({
+        where: { user_id: userId },
+        order: [['created_at', 'DESC']],
+        raw: true
+    });
 };
 
 export const findAllPendingRequests = async () => {
-    const [rows] = await db.query(
-        `SELECT tr.*, u.username, u.email, up.first_name, up.last_name, up.avatar_url 
-         FROM teacher_requests tr
-         JOIN users u ON tr.user_id = u.id
-         LEFT JOIN user_profiles up ON u.id = up.user_id
-         WHERE tr.status = 'pending'
-         ORDER BY tr.created_at ASC`
-    );
-    return rows;
+    const requests = await db.models.teacher_requests.findAll({
+        where: { status: 'pending' },
+        include: [{
+            model: db.models.users,
+            as: 'user',
+            attributes: ['username', 'email'],
+            include: [{ model: db.models.user_profiles, as: 'user_profile', attributes: ['first_name', 'last_name', 'avatar_url'] }]
+        }],
+        order: [['created_at', 'ASC']]
+    });
+    return requests.map(r => {
+        const data = r.toJSON();
+        return {
+            ...data,
+            username: data.user?.username,
+            email: data.user?.email,
+            first_name: data.user?.user_profile?.first_name,
+            last_name: data.user?.user_profile?.last_name,
+            avatar_url: data.user?.user_profile?.avatar_url
+        };
+    });
 };
 
 export const findRequestById = async (id) => {
-    const [rows] = await db.query(
-        `SELECT tr.*, u.username, u.email, up.first_name, up.last_name, up.avatar_url 
-         FROM teacher_requests tr
-         JOIN users u ON tr.user_id = u.id
-         LEFT JOIN user_profiles up ON u.id = up.user_id
-         WHERE tr.id = ?`,
-        [id]
-    );
-    return rows[0];
+    const request = await db.models.teacher_requests.findByPk(id, {
+        include: [{
+            model: db.models.users,
+            as: 'user',
+            attributes: ['username', 'email'],
+            include: [{ model: db.models.user_profiles, as: 'user_profile', attributes: ['first_name', 'last_name', 'avatar_url'] }]
+        }]
+    });
+    if (!request) return null;
+    const data = request.toJSON();
+    return {
+        ...data,
+        username: data.user?.username,
+        email: data.user?.email,
+        first_name: data.user?.user_profile?.first_name,
+        last_name: data.user?.user_profile?.last_name,
+        avatar_url: data.user?.user_profile?.avatar_url
+    };
 };
 
 export const updateRequestStatus = async (id, status, adminNote, adminId) => {
-    await db.query(
-        `UPDATE teacher_requests 
-         SET status = ?, admin_note = ?, reviewed_by = ?, reviewed_at = CURRENT_TIMESTAMP 
-         WHERE id = ?`,
-        [status, adminNote, adminId, id]
-    );
+    await db.models.teacher_requests.update({
+        status, admin_note: adminNote, reviewed_by: adminId, reviewed_at: new Date()
+    }, { where: { id } });
 };

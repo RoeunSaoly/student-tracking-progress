@@ -1,7 +1,7 @@
 import * as repo from "../repository/teacher.repository.js";
 import * as userRepo from "../repository/user.repository.js";
 import { addNotification } from "../../notifications/service/notification.service.js";
-import db from "../../../config/db.js";
+import db from "../../../database/index.js";
 
 export const getPendingTeachers = async () => {
     return await repo.findPendingTeachers();
@@ -26,13 +26,15 @@ export const validateTeacher = async (id, isValidated) => {
             console.error("Failed to create approval notification", notificationErr);
         }
     } else {
-        const [roles] = await db.query('SELECT id FROM roles WHERE name = ?', ['student']);
-        const studentRoleId = roles[0].id;
+        const studentRole = await db.models.roles.findOne({ where: { name: 'student' } });
         
-        await userRepo.updateUser(id, { is_validated: true, role_id: studentRoleId });
+        await userRepo.updateUser(id, { is_validated: true, role_id: studentRole.id });
         
         // Also mark any approved teacher_requests as rejected so they can re-apply
-        await db.query(`UPDATE teacher_requests SET status = 'rejected', admin_note = 'Teacher status was manually revoked by an administrator.' WHERE user_id = ?`, [id]);
+        await db.models.teacher_requests.update(
+            { status: 'rejected', admin_note: 'Teacher status was manually revoked by an administrator.' },
+            { where: { user_id: id } }
+        );
         
         try {
             await addNotification(id, {

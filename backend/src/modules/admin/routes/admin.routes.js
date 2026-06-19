@@ -9,6 +9,8 @@ import adminTeacherRequestRoutes from "../../teacherRequests/routes/admin.routes
 import { authenticate } from "../../../shared/middleware/auth.middleware.js";
 import { authorizeRoles } from "../../../shared/middleware/role.middleware.js";
 
+import assignmentRoutes from "./assignment.routes.js";
+
 const router = Router();
 
 // Only admin can access these routes
@@ -22,5 +24,6 @@ router.use("/dashboard", dashboardRoutes);
 router.use("/logs", logsRoutes);
 router.use("/assignments", assignmentRoutes);
 router.use("/teacher-requests", adminTeacherRequestRoutes);
+router.use("/assignments", assignmentRoutes);
 
 export default router;
