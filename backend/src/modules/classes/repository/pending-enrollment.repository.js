@@ -1,31 +1,31 @@
-import db from "../../../config/db.js";
+import db from "../../../database/index.js";
 
 // Create a pending enrollment request
 export const createPendingEnrollment = async (classId, studentId) => {
-  await db.query(
+  await db.sequelize.query(
     `INSERT INTO pending_enrollments (class_id, student_id) VALUES (?, ?)`,
-    [classId, studentId]
+    { replacements: [classId, studentId] }
   );
 };
 
 // Check if there's already a pending or active enrollment
 export const checkExistingEnrollment = async (classId, studentId) => {
-  const [rows] = await db.query(
+  const [rows] = await db.sequelize.query(
     `SELECT * FROM enrollments WHERE class_id = ? AND student_id = ?`,
-    [classId, studentId]
+    { replacements: [classId, studentId] }
   );
   if (rows.length > 0) return true;
 
-  const [pendingRows] = await db.query(
+  const [pendingRows] = await db.sequelize.query(
     `SELECT * FROM pending_enrollments WHERE class_id = ? AND student_id = ? AND status IN ('pending', 'approved')`,
-    [classId, studentId]
+    { replacements: [classId, studentId] }
   );
   return pendingRows.length > 0;
 };
 
 // Get pending join requests for a teacher's class
 export const getPendingRequests = async (classId) => {
-  const [rows] = await db.query(
+  const [rows] = await db.sequelize.query(
     `SELECT pe.id AS id, pe.class_id, pe.student_id, pe.status, pe.requested_at,
             u.username, u.email, p.first_name, p.last_name
      FROM pending_enrollments pe
@@ -33,7 +33,7 @@ export const getPendingRequests = async (classId) => {
      LEFT JOIN user_profiles p ON u.id = p.user_id
      WHERE pe.class_id = ? AND pe.status = 'pending'
      ORDER BY pe.requested_at ASC`,
-    [classId]
+    { replacements: [classId] }
   );
   return rows;
 };
@@ -42,30 +42,30 @@ export const getPendingRequests = async (classId) => {
 export const approvePendingRequest = async (requestId, classId, studentId) => {
   try {
     // First check if already enrolled
-    const [existingEnrollment] = await db.query(
+    const [existingEnrollment] = await db.sequelize.query(
       `SELECT * FROM enrollments WHERE class_id = ? AND student_id = ?`,
-      [classId, studentId]
+      { replacements: [classId, studentId] }
     );
     
     if (existingEnrollment.length > 0) {
       // Already enrolled, just update the pending request
-      await db.query(
+      await db.sequelize.query(
         `UPDATE pending_enrollments SET status = 'approved', responded_at = NOW() WHERE id = ?`,
-        [requestId]
+        { replacements: [requestId] }
       );
       return;
     }
 
     // Insert into enrollments
-    await db.query(
+    await db.sequelize.query(
       `INSERT INTO enrollments (class_id, student_id) VALUES (?, ?)`,
-      [classId, studentId]
+      { replacements: [classId, studentId] }
     );
 
     // Update pending request status
-    await db.query(
+    await db.sequelize.query(
       `UPDATE pending_enrollments SET status = 'approved', responded_at = NOW() WHERE id = ?`,
-      [requestId]
+      { replacements: [requestId] }
     );
   } catch (error) {
     console.error(`[ERROR] Failed to approve pending request ${requestId}:`, error);
@@ -75,9 +75,9 @@ export const approvePendingRequest = async (requestId, classId, studentId) => {
 
 // Reject a join request
 export const rejectPendingRequest = async (requestId) => {
-  await db.query(
+  await db.sequelize.query(
     `UPDATE pending_enrollments SET status = 'rejected', responded_at = NOW() WHERE id = ?`,
-    [requestId]
+    { replacements: [requestId] }
   );
 };
 
@@ -101,7 +101,7 @@ export const getClassJoinRequests = async (classId, status = null) => {
 
   query += ` ORDER BY pe.requested_at DESC`;
 
-  const [rows] = await db.query(query, params);
+  const [rows] = await db.sequelize.query(query, { replacements: params });
   return rows;
 };
 
@@ -110,9 +110,9 @@ export const getPendingRequestById = async (requestId, classId) => {
   console.log(`[DEBUG REPO] Querying pending request: requestId=${requestId}, classId=${classId}, types: ${typeof requestId} ${typeof classId}`);
   
   // First, check if the pending request exists at all
-  const [basicRows] = await db.query(
+  const [basicRows] = await db.sequelize.query(
     `SELECT * FROM pending_enrollments WHERE id = ? AND class_id = ?`,
-    [requestId, classId]
+    { replacements: [requestId, classId] }
   );
   
   console.log(`[DEBUG REPO] Basic query returned:`, basicRows);
@@ -121,23 +121,23 @@ export const getPendingRequestById = async (requestId, classId) => {
     console.log(`[DEBUG REPO] No pending enrollment found with id=${requestId}, classId=${classId}`);
     
     // Try without classId filter to see if request exists but in different class
-    const [anyRequest] = await db.query(
+    const [anyRequest] = await db.sequelize.query(
       `SELECT * FROM pending_enrollments WHERE id = ?`,
-      [requestId]
+      { replacements: [requestId] }
     );
     console.log(`[DEBUG REPO] Request with id ${requestId} in ANY class:`, anyRequest);
     return null;
   }
 
   // Now try the full JOIN query
-  const [rows] = await db.query(
+  const [rows] = await db.sequelize.query(
     `SELECT pe.id AS id, pe.class_id, pe.student_id, pe.status, pe.requested_at,
             u.username, u.email, p.first_name, p.last_name
      FROM pending_enrollments pe
      JOIN users u ON pe.student_id = u.id
      LEFT JOIN user_profiles p ON u.id = p.user_id
      WHERE pe.id = ? AND pe.class_id = ?`,
-    [requestId, classId]
+    { replacements: [requestId, classId] }
   );
   
   console.log(`[DEBUG REPO] Full JOIN query returned:`, rows);
