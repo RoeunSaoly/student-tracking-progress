@@ -1,38 +1,33 @@
-import db from "../../../config/db.js";
+import db from "../../../database/index.js";
 
 export const createMaterial = async (data) => {
   const { class_id, title, file_url } = data;
-  const [result] = await db.query(
-    `INSERT INTO materials (class_id, title, file_url)
-     VALUES (?, ?, ?)`,
-    [class_id, title, file_url]
-  );
-  return result.insertId;
+  const material = await db.models.materials.create({
+    class_id, title, file_url
+  });
+  return material.id;
 };
 
 export const updateMaterial = async (id, data) => {
   const { title, file_url } = data;
-  await db.query(
-    `UPDATE materials SET title = ?, file_url = ? WHERE id = ?`,
-    [title, file_url, id]
+  await db.models.materials.update(
+    { title, file_url },
+    { where: { id } }
   );
 };
 
 export const deleteMaterial = async (id) => {
-  await db.query(`DELETE FROM materials WHERE id = ?`, [id]);
+  await db.models.materials.destroy({ where: { id } });
 };
 
 export const findMaterialsByClass = async (classId) => {
-  const [rows] = await db.query(
-    `SELECT *
-     FROM materials
-     WHERE class_id = ? ORDER BY uploaded_at DESC`,
-    [classId]
-  );
-  return rows;
+  return await db.models.materials.findAll({
+    where: { class_id: classId },
+    order: [['uploaded_at', 'DESC']],
+    raw: true
+  });
 };
 
 export const findMaterialById = async (id) => {
-  const [rows] = await db.query(`SELECT * FROM materials WHERE id = ?`, [id]);
-  return rows[0];
+  return await db.models.materials.findByPk(id, { raw: true });
 };

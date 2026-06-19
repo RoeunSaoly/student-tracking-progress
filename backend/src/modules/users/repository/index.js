@@ -1,88 +1,108 @@
-import db from "../../../config/db.js";
+import db from "../../../database/index.js";
 
 export const findById = async (id) => {
-    const [rows] = await db.query(
-        `SELECT u.id, u.username, u.email, u.is_validated, u.is_active,
-                r.name as role,
-                p.first_name, p.last_name, p.phone, p.avatar_url
-         FROM users u
-         JOIN roles r ON u.role_id = r.id
-         LEFT JOIN user_profiles p ON u.id = p.user_id
-         WHERE u.id = ? AND u.is_deleted = FALSE`,
-        [id]
-    );
-
-    return rows[0];
+    const user = await db.models.users.findByPk(id, {
+        include: [
+            { model: db.models.roles, as: 'role', attributes: ['name'] },
+            { model: db.models.user_profiles, as: 'user_profile' }
+        ]
+    });
+    if (!user) return null;
+    const data = user.toJSON();
+    return {
+        id: data.id,
+        username: data.username,
+        email: data.email,
+        is_validated: data.is_validated,
+        is_active: data.is_active,
+        role: data.role?.name,
+        first_name: data.user_profile?.first_name,
+        last_name: data.user_profile?.last_name,
+        phone: data.user_profile?.phone,
+        avatar_url: data.user_profile?.avatar_url
+    };
 };
 
 export const updateProfile = async (userId, data) => {
-    const fields = [];
-    const params = [];
-
     const allowedFields = ['first_name', 'last_name', 'phone'];
+    const updateData = {};
     
     for (const key of allowedFields) {
         if (data[key] !== undefined) {
-            fields.push(`${key} = ?`);
-            params.push(data[key]);
+            updateData[key] = data[key];
         }
     }
 
-    if (fields.length === 0) return;
+    if (Object.keys(updateData).length === 0) return;
 
-    params.push(userId);
-    await db.query(
-        `UPDATE user_profiles SET ${fields.join(", ")} WHERE user_id = ?`,
-        params
-    );
+    await db.models.user_profiles.update(updateData, { where: { user_id: userId } });
 };
 
 export const updateAvatar = async (userId, avatarUrl) => {
-    await db.query(
-        `UPDATE user_profiles
-        SET avatar_url=?
-        WHERE user_id=?`,
-        [avatarUrl, userId]
+    await db.models.user_profiles.update(
+        { avatar_url: avatarUrl },
+        { where: { user_id: userId } }
     );
 };
 
 export const getAcademicRecord = async (studentId) => {
-    const [grades] = await db.query(
-        `SELECT g.*, a.title as assignment_title, c.name as class_name
-         FROM grades g
-         JOIN submissions s ON g.submission_id = s.id
-         JOIN assignments a ON s.assignment_id = a.id
-         JOIN classes c ON a.class_id = c.id
-         WHERE s.student_id = ?`,
-        [studentId]
-    );
+    const grades = await db.models.grades.findAll({
+        include: [{
+            model: db.models.submissions,
+            as: 'submission',
+            where: { student_id: studentId },
+            include: [{
+                model: db.models.assignments,
+                as: 'assignment',
+                include: [{ model: db.models.classes, as: 'class', attributes: ['name'] }]
+            }]
+        }],
+        order: [['graded_at', 'DESC']]
+    });
+    
+    const formattedGrades = grades.map(g => {
+        const data = g.toJSON();
+        return {
+            ...data,
+            assignment_title: data.submission?.assignment?.title,
+            class_name: data.submission?.assignment?.class?.name
+        };
+    });
 
-    const [goals] = await db.query(
-        `SELECT *, IF(status = 'completed', 1, 0) as is_completed FROM goals WHERE student_id = ?`,
-        [studentId]
-    );
+    const goals = await db.models.goals.findAll({
+        where: { student_id: studentId },
+        attributes: {
+            include: [
+                [db.sequelize.literal(`IF(status = 'completed', 1, 0)`), 'is_completed']
+            ]
+        },
+        raw: true
+    });
 
-    return { grades, goals };
+    return { grades: formattedGrades, goals };
 };
 
 export const updateRoleAndValidation = async (userId, roleName, isValidated) => {
-    // First get the role id
-    const [roles] = await db.query('SELECT id FROM roles WHERE name = ?', [roleName]);
-    if (!roles.length) throw new Error(`Role ${roleName} not found`);
-    const roleId = roles[0].id;
+    const role = await db.models.roles.findOne({ where: { name: roleName } });
+    if (!role) throw new Error(`Role ${roleName} not found`);
 
-    await db.query(
-        'UPDATE users SET role_id = ?, is_validated = ? WHERE id = ?',
-        [roleId, isValidated, userId]
+    await db.models.users.update(
+        { role_id: role.id, is_validated: isValidated },
+        { where: { id: userId } }
     );
 };
 
 export const findAdminUsers = async () => {
-    const [rows] = await db.query(
-        `SELECT u.id 
-         FROM users u 
-         JOIN roles r ON u.role_id = r.id 
-         WHERE r.name = 'admin' AND u.is_active = TRUE AND u.is_deleted = FALSE`
-    );
-    return rows;
+    const admins = await db.models.users.findAll({
+        where: { is_active: true, is_deleted: false },
+        include: [{
+            model: db.models.roles,
+            as: 'role',
+            where: { name: 'admin' },
+            attributes: []
+        }],
+        attributes: ['id'],
+        raw: true
+    });
+    return admins;
 };

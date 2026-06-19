@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   PresentationChartLineIcon,
   ArrowTrendingUpIcon,
@@ -11,10 +11,27 @@ import {
 } from '@heroicons/react/24/outline';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { useNavItems } from '@/hooks/useNavItems';
+import { adminService } from '@/services/adminService';
 
 export default function AdminAnalyticsPage() {
   const [timeFilter, setTimeFilter] = useState('month'); // week, month, year
+  const [stats, setStats] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const navItems = useNavItems();
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const data = await adminService.getDashboardStats();
+        setStats(data);
+      } catch (error) {
+        console.error("Failed to fetch admin stats", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
 
   return (
     <DashboardLayout navItems={navItems} title="Analytics Dashboard">
@@ -50,91 +67,96 @@ export default function AdminAnalyticsPage() {
           </div>
         </div>
 
-        {/* Highlight Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-md p-6 text-white shadow-lg shadow-blue-500/20">
-            <div className="flex items-center justify-between mb-4">
-              <span className="p-2.5 bg-white/20 rounded-md">
-                <UsersIcon className="h-6 w-6" />
-              </span>
-              <span className="px-2.5 py-1 bg-green-400/20 text-green-300 rounded-full text-[10px] font-black tracking-wider uppercase flex items-center gap-1 border border-green-400/30">
-                <ArrowTrendingUpIcon className="h-3 w-3" /> +15.2%
-              </span>
-            </div>
-            <p className="text-blue-100 text-xs font-bold uppercase tracking-widest">Active User Growth</p>
-            <p className="text-4xl font-black mt-1">2,451</p>
-          </div>
-
-          <div className="bg-white border border-gray-100 rounded-md p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <span className="p-2.5 bg-green-50 text-green-600 rounded-md">
-                <AcademicCapIcon className="h-6 w-6" />
-              </span>
-              <span className="px-2.5 py-1 bg-green-50 text-green-600 rounded-full text-[10px] font-black tracking-wider uppercase border border-green-100">
-                Healthy
-              </span>
-            </div>
-            <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Active Students</p>
-            <p className="text-4xl font-black text-gray-800 mt-1">1,940</p>
-          </div>
-
-          <div className="bg-white border border-gray-100 rounded-md p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <span className="p-2.5 bg-orange-50 text-orange-600 rounded-md">
-                <ChartBarIcon className="h-6 w-6" />
-              </span>
-              <span className="px-2.5 py-1 bg-orange-50 text-orange-600 rounded-full text-[10px] font-black tracking-wider uppercase border border-orange-100 flex items-center gap-1">
-                <ArrowTrendingUpIcon className="h-3 w-3" /> +4.1%
-              </span>
-            </div>
-            <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Global Submission Rate</p>
-            <p className="text-4xl font-black text-gray-800 mt-1">89%</p>
-          </div>
-        </div>
-
-        {/* Charts Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          
-          {/* User Growth Chart */}
-          <div className="bg-white rounded-md border border-gray-100 shadow-sm p-6 flex flex-col min-h-[400px]">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-50 text-blue-600 rounded-md">
-                  <PresentationChartLineIcon className="h-5 w-5" />
+        {loading ? (
+           <div className="flex justify-center p-12"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div></div>
+        ) : (
+          <>
+            {/* Highlight Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-md p-6 text-white shadow-lg shadow-blue-500/20">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="p-2.5 bg-white/20 rounded-md">
+                    <UsersIcon className="h-6 w-6" />
+                  </span>
+                  <span className="px-2.5 py-1 bg-green-400/20 text-green-300 rounded-full text-[10px] font-black tracking-wider uppercase flex items-center gap-1 border border-green-400/30">
+                    <ArrowTrendingUpIcon className="h-3 w-3" /> +15.2%
+                  </span>
                 </div>
-                <h3 className="text-lg font-bold text-gray-800">User Growth Trends</h3>
+                <p className="text-blue-100 text-xs font-bold uppercase tracking-widest">Total Users</p>
+                <p className="text-4xl font-black mt-1">{stats?.totalUsers?.toLocaleString() || 0}</p>
+              </div>
+
+              <div className="bg-white border border-gray-100 rounded-md p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="p-2.5 bg-green-50 text-green-600 rounded-md">
+                    <AcademicCapIcon className="h-6 w-6" />
+                  </span>
+                  <span className="px-2.5 py-1 bg-green-50 text-green-600 rounded-full text-[10px] font-black tracking-wider uppercase border border-green-100">
+                    Healthy
+                  </span>
+                </div>
+                <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Active Students</p>
+                <p className="text-4xl font-black text-gray-800 mt-1">{stats?.totalStudents?.toLocaleString() || 0}</p>
+              </div>
+
+              <div className="bg-white border border-gray-100 rounded-md p-6 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <span className="p-2.5 bg-orange-50 text-orange-600 rounded-md">
+                    <ChartBarIcon className="h-6 w-6" />
+                  </span>
+                  <span className="px-2.5 py-1 bg-orange-50 text-orange-600 rounded-full text-[10px] font-black tracking-wider uppercase border border-orange-100 flex items-center gap-1">
+                    <ArrowTrendingUpIcon className="h-3 w-3" /> +4.1%
+                  </span>
+                </div>
+                <p className="text-gray-400 text-xs font-bold uppercase tracking-widest">Global Submission Rate</p>
+                <p className="text-4xl font-black text-gray-800 mt-1">{stats?.globalSubmissionRate || 0}%</p>
               </div>
             </div>
-            
-            {/* Chart Placeholder */}
-            <div className="flex-1 border-2 border-dashed border-gray-100 rounded-md flex flex-col items-center justify-center text-gray-400 bg-gray-50/50">
-              <PresentationChartLineIcon className="h-10 w-10 text-gray-300 mb-2" />
-              <p className="text-sm font-bold uppercase tracking-widest">Growth Chart Data Area</p>
-              <p className="text-xs font-medium mt-1 max-w-[200px] text-center text-gray-400">Integrate a chart library like Recharts here</p>
-            </div>
-          </div>
 
-          {/* Submission Rate Chart */}
-          <div className="bg-white rounded-md border border-gray-100 shadow-sm p-6 flex flex-col min-h-[400px]">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-purple-50 text-purple-600 rounded-md">
-                  <DocumentCheckIcon className="h-5 w-5" />
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              
+              {/* User Growth Chart */}
+              <div className="bg-white rounded-md border border-gray-100 shadow-sm p-6 flex flex-col min-h-[400px]">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-blue-50 text-blue-600 rounded-md">
+                      <PresentationChartLineIcon className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-800">User Growth Trends</h3>
+                  </div>
                 </div>
-                <h3 className="text-lg font-bold text-gray-800">Submission Analytics</h3>
+                
+                {/* Chart Placeholder */}
+                <div className="flex-1 border-2 border-dashed border-gray-100 rounded-md flex flex-col items-center justify-center text-gray-400 bg-gray-50/50">
+                  <PresentationChartLineIcon className="h-10 w-10 text-gray-300 mb-2" />
+                  <p className="text-sm font-bold uppercase tracking-widest">Growth Chart Data Area</p>
+                  <p className="text-xs font-medium mt-1 max-w-[200px] text-center text-gray-400">Integrate a chart library like Recharts here</p>
+                </div>
               </div>
-            </div>
-            
-            {/* Chart Placeholder */}
-            <div className="flex-1 border-2 border-dashed border-gray-100 rounded-md flex flex-col items-center justify-center text-gray-400 bg-gray-50/50">
-              <ChartBarIcon className="h-10 w-10 text-gray-300 mb-2" />
-              <p className="text-sm font-bold uppercase tracking-widest">Submission Rate Data</p>
-              <p className="text-xs font-medium mt-1 max-w-[200px] text-center text-gray-400">Integrate a chart library like Recharts here</p>
-            </div>
-          </div>
 
-        </div>
+              {/* Submission Rate Chart */}
+              <div className="bg-white rounded-md border border-gray-100 shadow-sm p-6 flex flex-col min-h-[400px]">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-purple-50 text-purple-600 rounded-md">
+                      <DocumentCheckIcon className="h-5 w-5" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-800">Submission Analytics</h3>
+                  </div>
+                </div>
+                
+                {/* Chart Placeholder */}
+                <div className="flex-1 border-2 border-dashed border-gray-100 rounded-md flex flex-col items-center justify-center text-gray-400 bg-gray-50/50">
+                  <ChartBarIcon className="h-10 w-10 text-gray-300 mb-2" />
+                  <p className="text-sm font-bold uppercase tracking-widest">Submission Rate Data</p>
+                  <p className="text-xs font-medium mt-1 max-w-[200px] text-center text-gray-400">Integrate a chart library like Recharts here</p>
+                </div>
+              </div>
 
+            </div>
+          </>
+        )}
       </div>
     </DashboardLayout>
   );

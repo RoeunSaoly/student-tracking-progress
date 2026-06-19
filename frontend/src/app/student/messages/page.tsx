@@ -14,7 +14,8 @@ import {
   MicrophoneIcon,
   XMarkIcon,
   ArrowUturnLeftIcon,
-  TrashIcon
+  TrashIcon,
+  UserCircleIcon
 } from '@heroicons/react/24/outline';
 import { 
   CheckIcon as CheckSolidIcon,

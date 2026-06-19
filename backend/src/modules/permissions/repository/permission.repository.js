@@ -1,17 +1,15 @@
-import db from "../../../config/db.js";
+import db from "../../../database/index.js";
 
 export const findPermissionsByRoleId = async (roleId) => {
-    const [rows] = await db.query(
-        `SELECT p.name
-         FROM permissions p
-         JOIN role_permissions rp ON p.id = rp.permission_id
-         WHERE rp.role_id = ?`,
-        [roleId]
-    );
-    return rows.map(r => r.name);
+    const role = await db.models.roles.findByPk(roleId, {
+        include: [{
+            model: db.models.permissions,
+            as: 'permission_id_permissions'
+        }]
+    });
+    return role ? role.permission_id_permissions.map(p => p.name) : [];
 };
 
 export const findAllPermissions = async () => {
-    const [rows] = await db.query("SELECT * FROM permissions");
-    return rows;
+    return await db.models.permissions.findAll({ raw: true });
 };

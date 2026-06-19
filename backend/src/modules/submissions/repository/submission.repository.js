@@ -1,45 +1,52 @@
-import db from "../../../config/db.js";
+import db from "../../../database/index.js";
 
 export const createSubmission = async (data) => {
   const { assignment_id, student_id, file_path, status } = data;
-  const [result] = await db.query(
-    `INSERT INTO submissions (assignment_id, student_id, file_path, status)
-     VALUES (?, ?, ?, ?)
-     ON DUPLICATE KEY UPDATE 
-     file_path = VALUES(file_path), status = VALUES(status), submitted_at = CURRENT_TIMESTAMP`,
-    [assignment_id, student_id, file_path, status]
-  );
-  return result.insertId;
+  const [submission] = await db.models.submissions.upsert({
+    assignment_id, student_id, file_path, status, submitted_at: new Date()
+  });
+  return submission.id;
 };
 
 export const findSubmissionsByAssignment = async (assignmentId) => {
-  const [rows] = await db.query(
-    `SELECT s.*, u.username as student_name, u.email as student_email, g.score, g.feedback
-     FROM submissions s
-     JOIN users u ON s.student_id = u.id
-     LEFT JOIN grades g ON s.id = g.submission_id
-     WHERE s.assignment_id = ?`,
-    [assignmentId]
-  );
-  return rows;
+  const submissions = await db.models.submissions.findAll({
+    where: { assignment_id: assignmentId },
+    include: [
+      { model: db.models.users, as: 'student', attributes: ['username', 'email'] },
+      { model: db.models.grades, as: 'grade', attributes: ['score', 'feedback'] }
+    ]
+  });
+  return submissions.map(s => {
+    const data = s.toJSON();
+    return {
+      ...data,
+      student_name: data.student?.username,
+      student_email: data.student?.email,
+      score: data.grade?.score,
+      feedback: data.grade?.feedback
+    };
+  });
 };
 
 export const findSubmissionsByStudent = async (studentId) => {
-  const [rows] = await db.query(
-    `SELECT s.*, a.title as assignment_title, a.due_date
-     FROM submissions s
-     JOIN assignments a ON s.assignment_id = a.id
-     WHERE s.student_id = ?`,
-    [studentId]
-  );
-  return rows;
+  const submissions = await db.models.submissions.findAll({
+    where: { student_id: studentId },
+    include: [{ model: db.models.assignments, as: 'assignment', attributes: ['title', 'due_date'] }]
+  });
+  return submissions.map(s => {
+    const data = s.toJSON();
+    return {
+      ...data,
+      assignment_title: data.assignment?.title,
+      due_date: data.assignment?.due_date
+    };
+  });
 };
 
-// Also we need to check if assignment exists for submission
 export const findAssignmentById = async (id) => {
-  const [rows] = await db.query(`SELECT * FROM assignments WHERE id = ?`, [id]);
-  return rows[0];
+  return await db.models.assignments.findByPk(id, { raw: true });
 };
+
 export const updateStatus = async (id, status) => {
-  await db.query(`UPDATE submissions SET status = ? WHERE id = ?`, [status, id]);
+  await db.models.submissions.update({ status }, { where: { id } });
 };

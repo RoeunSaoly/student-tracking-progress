@@ -1,100 +1,127 @@
-import db from "../../../config/db.js";
+import db from "../../../database/index.js";
+import { Op } from "sequelize";
 
 export const findAllUsers = async ({ search, role, status, page = 1, limit = 10 }) => {
-    let query = `
-        SELECT u.id, u.username, u.email, u.is_active, u.is_validated, u.is_deleted, u.status, u.last_login_at, u.created_at,
-               r.name as role_name
-        FROM users u
-        JOIN roles r ON u.role_id = r.id
-        WHERE u.is_deleted = FALSE
-    `;
-    const params = [];
-
+    const where = { is_deleted: false };
+    
     if (search) {
-        query += ` AND (u.username LIKE ? OR u.email LIKE ?)`;
-        params.push(`%${search}%`, `%${search}%`);
+        where[Op.or] = [
+            { username: { [Op.like]: `%${search}%` } },
+            { email: { [Op.like]: `%${search}%` } }
+        ];
     }
-
-    if (role) {
-        query += ` AND r.name = ?`;
-        params.push(role);
-    }
-
+    
     if (status !== undefined && status !== '') {
-        query += ` AND u.status = ?`;
-        params.push(status);
+        where.status = status;
     }
 
-    query += ` ORDER BY u.created_at DESC LIMIT ? OFFSET ?`;
-    params.push(parseInt(limit), (parseInt(page) - 1) * parseInt(limit));
+    const roleInclude = {
+        model: db.models.roles,
+        as: 'role',
+        attributes: ['name']
+    };
+    
+    if (role) {
+        roleInclude.where = { name: role };
+    }
 
-    const [rows] = await db.query(query, params);
-    return rows;
+    const users = await db.models.users.findAll({
+        where,
+        include: [roleInclude],
+        attributes: ['id', 'username', 'email', 'is_active', 'is_validated', 'is_deleted', 'status', 'last_login_at', 'created_at'],
+        order: [['created_at', 'DESC']],
+        limit: parseInt(limit),
+        offset: (parseInt(page) - 1) * parseInt(limit)
+    });
+
+    return users.map(u => {
+        const data = u.toJSON();
+        return {
+            ...data,
+            role_name: data.role?.name
+        };
+    });
 };
 
 export const findUserById = async (id) => {
-    const [rows] = await db.query(
-        `SELECT u.*, r.name as role_name
-         FROM users u
-         JOIN roles r ON u.role_id = r.id
-         WHERE u.id = ? AND u.is_deleted = FALSE`,
-        [id]
-    );
-    return rows[0];
+    const user = await db.models.users.findOne({
+        where: { id, is_deleted: false },
+        include: [{ model: db.models.roles, as: 'role', attributes: ['name'] }]
+    });
+    if (!user) return null;
+    const data = user.toJSON();
+    return { ...data, role_name: data.role?.name };
 };
 
 export const updateUser = async (id, data) => {
-    const fields = [];
-    const params = [];
-    for (const [key, value] of Object.entries(data)) {
-        fields.push(`${key} = ?`);
-        params.push(value);
-    }
-    params.push(id);
-    await db.query(`UPDATE users SET ${fields.join(", ")} WHERE id = ?`, params);
+    await db.models.users.update(data, { where: { id } });
 };
 
 export const softDeleteUser = async (id) => {
-    await db.query(`UPDATE users SET is_deleted = TRUE WHERE id = ?`, [id]);
+    await db.models.users.update({ is_deleted: true }, { where: { id } });
 };
 
 export const bulkActionUsers = async (userIds, action, data = null) => {
     if (!userIds || userIds.length === 0) return;
     
-    const placeholders = userIds.map(() => '?').join(',');
+    const where = { id: { [Op.in]: userIds } };
     
     if (action === 'delete') {
-        await db.query(`UPDATE users SET is_deleted = TRUE WHERE id IN (${placeholders})`, userIds);
+        await db.models.users.update({ is_deleted: true }, { where });
     } else if (action === 'update_status' && data?.status) {
-        await db.query(`UPDATE users SET status = ? WHERE id IN (${placeholders})`, [data.status, ...userIds]);
+        await db.models.users.update({ status: data.status }, { where });
     } else if (action === 'update_role' && data?.role_id) {
-        await db.query(`UPDATE users SET role_id = ? WHERE id IN (${placeholders})`, [data.role_id, ...userIds]);
+        await db.models.users.update({ role_id: data.role_id }, { where });
     }
 };
 
 export const getStudentAcademicRecord = async (studentId) => {
-    const [grades] = await db.query(
-        `SELECT g.*, a.title as assignment_title, c.name as class_name
-         FROM grades g
-         JOIN submissions s ON g.submission_id = s.id
-         JOIN assignments a ON s.assignment_id = a.id
-         JOIN classes c ON a.class_id = c.id
-         WHERE s.student_id = ?`,
-        [studentId]
-    );
+    const grades = await db.models.grades.findAll({
+        include: [{
+            model: db.models.submissions,
+            as: 'submission',
+            where: { student_id: studentId },
+            include: [{
+                model: db.models.assignments,
+                as: 'assignment',
+                include: [{ model: db.models.classes, as: 'class', attributes: ['name'] }]
+            }]
+        }],
+        order: [['graded_at', 'DESC']]
+    });
+    
+    const formattedGrades = grades.map(g => {
+        const data = g.toJSON();
+        return {
+            ...data,
+            assignment_title: data.submission?.assignment?.title,
+            class_name: data.submission?.assignment?.class?.name
+        };
+    });
 
-    const [goals] = await db.query(
-        `SELECT *, IF(status = 'completed', 1, 0) as is_completed FROM goals WHERE student_id = ?`,
-        [studentId]
-    );
+    const goals = await db.models.goals.findAll({
+        where: { student_id: studentId },
+        attributes: {
+            include: [
+                [db.sequelize.literal(`IF(status = 'completed', 1, 0)`), 'is_completed']
+            ]
+        },
+        raw: true
+    });
 
-    const [enrollments] = await db.query(
-        `SELECT c.name, e.enrolled_at, e.status
-         FROM enrollments e
-         JOIN classes c ON e.class_id = c.id
-         WHERE e.student_id = ?`,
-        [studentId]
-    );
+    const enrollments = await db.models.enrollments.findAll({
+        where: { student_id: studentId },
+        include: [{ model: db.models.classes, as: 'class', attributes: ['name'] }]
+    });
 
-    return { grades, goals, enrollments };
+    const formattedEnrollments = enrollments.map(e => {
+        const data = e.toJSON();
+        return {
+            name: data.class?.name,
+            enrolled_at: data.enrolled_at,
+            status: data.status
+        };
+    });
+
+    return { grades: formattedGrades, goals, enrollments: formattedEnrollments };
 };

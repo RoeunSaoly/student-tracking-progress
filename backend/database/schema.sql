@@ -182,13 +182,19 @@ CREATE TABLE goals (
     id INT AUTO_INCREMENT PRIMARY KEY,
     student_id INT NOT NULL,
     class_id INT NULL,
+    assignment_id INT NULL,
     title VARCHAR(255) NOT NULL,
+    type VARCHAR(50) DEFAULT 'general',
+    target_value INT DEFAULT 100,
+    current_value INT DEFAULT 0,
+    progress INT DEFAULT 0,
+    status ENUM('pending', 'in_progress', 'completed') DEFAULT 'pending',
     target_date DATE,
-    is_completed BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE SET NULL
+    FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE SET NULL,
+    FOREIGN KEY (assignment_id) REFERENCES assignments(id) ON DELETE SET NULL
 );
 
 -- =====================================

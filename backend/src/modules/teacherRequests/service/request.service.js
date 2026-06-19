@@ -1,7 +1,7 @@
 import * as repo from "../repository/request.repository.js";
 import * as userRepo from "../../admin/repository/user.repository.js";
 import { addNotification } from "../../notifications/service/notification.service.js";
-import db from "../../../config/db.js";
+import db from "../../../database/index.js";
 
 export const createRequest = async (userId, data, files) => {
     // Check if user already has a pending request
@@ -36,7 +36,11 @@ export const createRequest = async (userId, data, files) => {
     const requestId = await repo.createTeacherRequest(requestData);
 
     // Notify admins
-    const [admins] = await db.query(`SELECT u.id FROM users u JOIN roles r ON u.role_id = r.id WHERE r.name = 'admin'`);
+    const admins = await db.models.users.findAll({
+        include: [{ model: db.models.roles, as: 'role', where: { name: 'admin' }, attributes: [] }],
+        attributes: ['id']
+    });
+    
     for (const admin of admins) {
         await addNotification(admin.id, {
             title: "New Teacher Verification",
@@ -67,8 +71,8 @@ export const approveRequest = async (id, adminId) => {
 
     await repo.updateRequestStatus(id, 'approved', null, adminId);
     
-    const [roles] = await db.query('SELECT id FROM roles WHERE name = ?', ['teacher']);
-    await userRepo.updateUser(request.user_id, { is_validated: true, role_id: roles[0].id });
+    const role = await db.models.roles.findOne({ where: { name: 'teacher' } });
+    await userRepo.updateUser(request.user_id, { is_validated: true, role_id: role.id });
 
     await addNotification(request.user_id, {
         title: "Instructor Account Approved 🚀",

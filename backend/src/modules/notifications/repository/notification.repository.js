@@ -1,40 +1,37 @@
-import db from "../../../config/db.js";
-
-
+import db from "../../../database/index.js";
 
 export const createNotification = async (userId, { title, message, type, link = null }) => {
-  const [result] = await db.query(
-    `INSERT INTO notifications (user_id, title, message, type, link) VALUES (?, ?, ?, ?, ?)`,
-    [userId, title, message, type, link]
-  );
-  return result.insertId;
+  const notif = await db.models.notifications.create({
+    user_id: userId, title, message, type, link
+  });
+  return notif.id;
 };
 
 export const findByUserId = async (userId) => {
-  const [rows] = await db.query(
-    `SELECT * FROM notifications WHERE user_id = ? ORDER BY created_at DESC LIMIT 50`,
-    [userId]
-  );
-  return rows;
+  return await db.models.notifications.findAll({
+    where: { user_id: userId },
+    order: [['created_at', 'DESC']],
+    limit: 50,
+    raw: true
+  });
 };
 
 export const markAsRead = async (id, userId) => {
-  await db.query(
-    `UPDATE notifications SET is_read = TRUE WHERE id = ? AND user_id = ?`,
-    [id, userId]
+  await db.models.notifications.update(
+    { is_read: true },
+    { where: { id, user_id: userId } }
   );
 };
 
 export const markAllAsRead = async (userId) => {
-  await db.query(
-    `UPDATE notifications SET is_read = TRUE WHERE user_id = ?`,
-    [userId]
+  await db.models.notifications.update(
+    { is_read: true },
+    { where: { user_id: userId } }
   );
 };
 
 export const deleteNotification = async (id, userId) => {
-  await db.query(
-    `DELETE FROM notifications WHERE id = ? AND user_id = ?`,
-    [id, userId]
-  );
+  await db.models.notifications.destroy({
+    where: { id, user_id: userId }
+  });
 };
