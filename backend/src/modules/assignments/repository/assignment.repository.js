@@ -78,3 +78,16 @@ export const findAssignmentsForStudent = async (studentId) => {
   );
   return rows;
 };
+
+export const findAllAssignments = async () => {
+  const [rows] = await db.query(
+    `SELECT a.*, c.name as class_name, u.username as teacher_name,
+     (SELECT COUNT(*) FROM submissions s WHERE s.assignment_id = a.id) as submission_count,
+     (SELECT COUNT(*) FROM enrollments e WHERE e.class_id = a.class_id AND e.status = 'active') as total_students
+     FROM assignments a
+     JOIN classes c ON a.class_id = c.id
+     JOIN users u ON c.teacher_id = u.id
+     ORDER BY a.created_at DESC`
+  );
+  return rows;
+};

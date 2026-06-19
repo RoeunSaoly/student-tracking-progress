@@ -51,3 +51,22 @@ export const getEnrolledStudents = asyncHandler(async (req, res) => {
     const result = await service.getEnrolledStudents(req.params.id, req.user);
     res.json(result);
 });
+
+export const getPendingJoinRequests = asyncHandler(async (req, res) => {
+    const result = await service.getPendingJoinRequests(req.params.id, req.user);
+    res.json(result);
+});
+
+export const approvePendingRequest = asyncHandler(async (req, res) => {
+    const { id, requestId } = req.params;
+    const result = await service.approvePendingRequest(parseInt(requestId), parseInt(id), req.user);
+    await logActivity(req.user.id, `Approved join request for class ID: ${id}`);
+    res.json(result);
+});
+
+export const rejectPendingRequest = asyncHandler(async (req, res) => {
+    const { id, requestId } = req.params;
+    const result = await service.rejectPendingRequest(parseInt(requestId), parseInt(id), req.user);
+    await logActivity(req.user.id, `Rejected join request for class ID: ${id}`);
+    res.json(result);
+});
