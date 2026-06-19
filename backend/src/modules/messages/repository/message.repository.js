@@ -67,6 +67,19 @@ export const findRecentConversations = async (userId) => {
   return rows;
 };
 
+export const markMessagesAsRead = async (senderId, receiverId) => {
+  await db.models.messages.update(
+    { is_read: true },
+    {
+      where: {
+        sender_id: senderId,
+        receiver_id: receiverId,
+        is_read: false
+      }
+    }
+  );
+};
+
 export const createAnnouncement = async (data) => {
   const { admin_id, title, content } = data;
   const [result] = await db.sequelize.query(

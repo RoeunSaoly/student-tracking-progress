@@ -65,6 +65,26 @@ router.get("/:userId", authenticate, controller.getConversation);
 
 /**
  * @swagger
+ * /messages/read/{senderId}:
+ *   put:
+ *     summary: Mark messages as read
+ *     tags: [Messages]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: senderId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Messages marked as read
+ */
+router.put("/read/:senderId", authenticate, controller.markAsRead);
+
+/**
+ * @swagger
  * /messages/announcements:
  *   post:
  *     summary: Create an announcement (Admin only)
