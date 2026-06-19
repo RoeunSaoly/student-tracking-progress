@@ -1,5 +1,6 @@
 import * as repo from "../repository/assignment.repository.js";
 import * as classRepo from "../../classes/repository/class.repository.js";
+import * as notificationService from "../../notifications/service/notification.service.js";
 
 export const createAssignment = async (data, userId) => {
   const classData = await classRepo.findById(data.class_id);
@@ -10,6 +11,30 @@ export const createAssignment = async (data, userId) => {
   }
 
   const assignmentId = await repo.createAssignment(data);
+
+  try {
+    const now = new Date();
+    const appearTime = data.available_from ? new Date(data.available_from) : now;
+    
+    if (appearTime <= now) {
+      const students = await classRepo.findEnrolledStudents(data.class_id);
+      const notificationPromises = students
+        .filter(s => s.status === 'active')
+        .map(student => 
+          notificationService.addNotification(student.id, {
+            title: "New Assignment",
+            message: `A new assignment "${data.title}" has been posted in ${classData.name}.`,
+            type: "assignment",
+            link: `/student/assignments`,
+            target_role: "student"
+          })
+        );
+      await Promise.all(notificationPromises);
+    }
+  } catch (err) {
+    console.error("Failed to notify students of new assignment:", err);
+  }
+
   return { assignmentId };
 };
 

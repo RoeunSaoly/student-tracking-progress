@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   HomeIcon, 
   BookOpenIcon, 
@@ -23,12 +24,7 @@ const AssignmentView = () => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('All');
   const navItems = useNavItems();
-
-  // Submission modal
-  const [selectedAssignment, setSelectedAssignment] = useState<Assignment | null>(null);
-  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
-  const [submitting, setSubmitting] = useState(false);
+  const router = useRouter();
 
   // Dialog modal state
   const [dialog, setDialog] = useState<{ open: boolean; type: 'success' | 'error'; title: string; message: string }>({
@@ -50,31 +46,8 @@ const AssignmentView = () => {
     }
   };
 
-  const handleSubmitClick = (assignment: Assignment) => {
-    setSelectedAssignment(assignment);
-    setIsSubmitModalOpen(true);
-  };
-
-  const handleFileUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!file || !selectedAssignment) return;
-
-    setSubmitting(true);
-    try {
-      const formData = new FormData();
-      formData.append('assignment_id', selectedAssignment.id);
-      formData.append('file', file);
-
-      await assignmentService.submitAssignment(formData);
-      setIsSubmitModalOpen(false);
-      setFile(null);
-      fetchAssignments();
-      setDialog({ open: true, type: 'success', title: 'Submitted!', message: 'Your assignment has been submitted successfully.' });
-    } catch (error) {
-      setDialog({ open: true, type: 'error', title: 'Submission Failed', message: 'Failed to submit assignment. Please try again.' });
-    } finally {
-      setSubmitting(false);
-    }
+  const handleViewDetails = (assignment: Assignment) => {
+    router.push(`/student/assignments/${assignment.id}`);
   };
 
   const filtered = assignments.filter(a => filter === 'All' || a.status === filter);
@@ -118,7 +91,11 @@ const AssignmentView = () => {
             {filtered.map((item) => {
               const deadline = getDeadlineInfo(item.due_date);
               return (
-                <div key={item.id} className="bg-white rounded-md p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center group hover:shadow-xl transition-all duration-300">
+                <div 
+                  key={item.id} 
+                  onClick={() => handleViewDetails(item)}
+                  className="bg-white rounded-md p-6 shadow-sm border border-gray-100 flex flex-col md:flex-row justify-between items-start md:items-center group hover:shadow-xl hover:border-blue-200 transition-all duration-300 cursor-pointer"
+                >
                   <div className="flex gap-4 items-start mb-4 md:mb-0">
                     <div className={`p-4 rounded-md flex-shrink-0 
                       ${item.status === 'Graded' ? 'bg-green-50 text-green-600' : 
@@ -127,7 +104,9 @@ const AssignmentView = () => {
                       <ClipboardIcon className="h-6 w-6" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-800 group-hover:text-blue-600 transition-colors">{item.title}</h3>
+                      <h3 className="font-bold text-gray-800 group-hover:text-blue-600 transition-colors text-lg">
+                        {item.title}
+                      </h3>
                       <p className="text-xs text-gray-400 font-bold uppercase tracking-tighter mt-1">{item.class_name} • {item.max_score} Points</p>
                       <div className="flex items-center gap-3 mt-3">
                         <div className="flex items-center gap-1.5 text-xs font-bold text-gray-500">
@@ -152,34 +131,49 @@ const AssignmentView = () => {
                         <span className="bg-green-100 text-green-700 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest">
                           Grade: {item.grade}/{item.max_score}
                         </span>
-                        <p className="text-[10px] text-gray-400 font-bold uppercase mt-2">View Feedback</p>
+                        <div className="flex gap-3 justify-end mt-2">
+                          <button 
+                            onClick={(e) => { e.stopPropagation(); handleViewDetails(item); }} 
+                            className="text-[10px] text-gray-400 font-bold uppercase hover:text-blue-600"
+                          >
+                            View Feedback
+                          </button>
+                        </div>
                       </div>
                     ) : item.status === 'Submitted' ? (
-                      <div className="text-right">
+                      <div className="text-right flex flex-col items-end gap-2">
                         <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-md text-[10px] font-black uppercase tracking-widest">
                           Submitted
                         </span>
-                        {(item.class_is_active !== 0 && item.class_is_active !== false) && (
-                          <button 
-                            onClick={() => handleSubmitClick(item)}
-                            className="block text-[10px] text-gray-400 font-bold uppercase mt-2 hover:text-blue-600 text-right w-full"
-                          >
-                            Update File
-                          </button>
-                        )}
+                        <div className="flex items-center gap-3">
+                          {(item.class_is_active !== 0 && item.class_is_active !== false) && (
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleViewDetails(item); }}
+                              className="text-[10px] text-blue-500 font-bold uppercase hover:text-blue-700"
+                            >
+                              Update File
+                            </button>
+                          )}
+                        </div>
                       </div>
                     ) : (
-                      (item.class_is_active !== 0 && item.class_is_active !== false) ? (
-                        <button 
-                          onClick={() => handleSubmitClick(item)}
-                          className="w-full md:w-auto bg-gray-900 text-white px-6 py-2.5 rounded-md text-xs font-bold hover:bg-blue-600 transition-all flex items-center justify-center gap-2"
-                        >
-                          <CloudArrowUpIcon className="h-4 w-4" />
-                          Submit
-                        </button>
-                      ) : (
-                        <span className="text-xs font-bold text-gray-500 uppercase">Not Submitted</span>
-                      )
+                      <div className="flex flex-col items-end gap-2 w-full md:w-auto">
+                        {(item.class_is_active !== 0 && item.class_is_active !== false) ? (
+                          <div className="flex flex-row items-center justify-between md:justify-end gap-3 w-full">
+                            <button 
+                              onClick={(e) => { e.stopPropagation(); handleViewDetails(item); }}
+                              className="bg-gray-900 text-white px-6 py-2.5 rounded-md text-xs font-bold hover:bg-blue-600 transition-all flex items-center justify-center gap-2"
+                            >
+                              <CloudArrowUpIcon className="h-4 w-4" />
+                              Submit
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-3">
+                            <span className="text-xs font-bold text-gray-500 uppercase">Not Submitted</span>
+                          </div>
+                        )}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -218,72 +212,20 @@ const AssignmentView = () => {
                     <p className="text-[10px] font-bold uppercase tracking-widest opacity-60">Completed</p>
                   </div>
                 </div>
+                {assignments.filter(a => a.status === 'Graded').length > 0 && (
+                  <div className="bg-white/20 p-5 rounded-md backdrop-blur-md text-center border border-white/10 mt-2">
+                    <p className="text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">Total Earned Score</p>
+                    <p className="text-3xl font-black">
+                      {assignments.reduce((sum, a) => sum + (a.status === 'Graded' ? Number(a.grade || 0) : 0), 0)}
+                      <span className="text-sm opacity-60 ml-1">/ {assignments.reduce((sum, a) => sum + (a.status === 'Graded' ? Number(a.max_score || 0) : 0), 0)}</span>
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
       )}
-
-      {/* Submission Modal */}
-      <Modal 
-        isOpen={isSubmitModalOpen} 
-        onClose={() => setIsSubmitModalOpen(false)}
-        title={`Submit: ${selectedAssignment?.title}`}
-      >
-        <form onSubmit={handleFileUpload} className="space-y-6">
-          <div className="border-2 border-dashed border-gray-200 rounded-md p-10 text-center hover:border-blue-500 transition-colors group">
-            {!file ? (
-              <label className="cursor-pointer">
-                <CloudArrowUpIcon className="h-12 w-12 mx-auto text-gray-300 group-hover:text-blue-500 transition-colors mb-4" />
-                <p className="text-sm font-bold text-gray-500">Click to upload or drag and drop</p>
-                <p className="text-[10px] text-gray-400 mt-1 uppercase font-black">PDF, DOCX, ZIP (MAX 10MB)</p>
-                <input 
-                  type="file" 
-                  className="hidden" 
-                  onChange={(e) => setFile(e.target.files?.[0] || null)}
-                />
-              </label>
-            ) : (
-              <div className="flex items-center justify-between bg-blue-50 p-4 rounded-md border border-blue-100">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-blue-600 rounded-md text-white">
-                    <ClipboardIcon className="h-5 w-5" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-sm font-bold text-blue-900 truncate max-w-[200px]">{file.name}</p>
-                    <p className="text-[10px] font-bold text-blue-400">{(file.size / 1024 / 1024).toFixed(2)} MB</p>
-                  </div>
-                </div>
-                <button 
-                  type="button" 
-                  onClick={() => setFile(null)}
-                  className="p-1 hover:bg-blue-100 rounded-full transition-colors"
-                >
-                  <XMarkIcon className="h-5 w-5 text-blue-400" />
-                </button>
-              </div>
-            )}
-          </div>
-          
-          <div className="flex gap-4">
-            <button 
-              type="button"
-              onClick={() => setIsSubmitModalOpen(false)}
-              className="flex-1 px-6 py-3 rounded-md border border-gray-200 font-bold text-gray-500 hover:bg-gray-50 transition-all"
-            >
-              Cancel
-            </button>
-            <button 
-              type="submit"
-              disabled={!file || submitting}
-              className={`flex-1 px-6 py-3 rounded-md bg-blue-600 text-white font-bold transition-all shadow-lg shadow-blue-200
-                ${(!file || submitting) ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
-            >
-              {submitting ? 'Submitting...' : 'Confirm Submission'}
-            </button>
-          </div>
-        </form>
-      </Modal>
 
       {/* Dialog Modal for alerts */}
       <DialogModal

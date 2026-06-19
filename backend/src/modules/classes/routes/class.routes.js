@@ -3,6 +3,7 @@ import * as controller from "../controller/class.controller.js";
 import { authenticate } from "../../../shared/middleware/auth.middleware.js";
 import { authorizePermission } from "../../../shared/middleware/permission.middleware.js";
 import { validateRequest } from "../../../shared/middleware/validate.middleware.js";
+import { classCoverUpload } from "../../../shared/middleware/upload.middleware.js";
 import * as schema from "../validation/class.validation.js";
 
 const router = express.Router();
@@ -22,7 +23,7 @@ const router = express.Router();
  *     security:
  *       - bearerAuth: []
  */
-router.post("/", authenticate, authorizePermission("class.create"), validateRequest(schema.createClassSchema), controller.createClass);
+router.post("/", authenticate, authorizePermission("class.create"), classCoverUpload.single("cover_image"), validateRequest(schema.createClassSchema), controller.createClass);
 
 /**
  * @swagger
@@ -135,7 +136,7 @@ router.delete(
  *       200:
  *         description: Class updated successfully
  */
-router.put("/:id", authenticate, authorizePermission("class.create"), validateRequest(schema.updateClassSchema), controller.updateClass);
+router.put("/:id", authenticate, authorizePermission("class.create"), classCoverUpload.single("cover_image"), validateRequest(schema.updateClassSchema), controller.updateClass);
 
 /**
  * @swagger

@@ -6,13 +6,14 @@ export interface Assignment {
   title: string;
   description: string;
   due_date: string;
+  available_from?: string;
   max_score: number;
   status?: string;
   grade?: number;
   class_name?: string;
   submission_count?: number;
-  total_students?: number;
   class_is_active?: number | boolean;
+  submission_type?: string;
 }
 
 export interface Submission {
@@ -26,6 +27,7 @@ export interface Submission {
   student_email?: string;
   score?: number;
   feedback?: string;
+  content?: string;
 }
 
 export const assignmentService = {
@@ -66,6 +68,11 @@ export const assignmentService = {
 
   getSubmissions: async (assignmentId: string) => {
     const response = await api.get(`/submissions?assignment_id=${assignmentId}`);
+    return response.data;
+  },
+
+  getMySubmissions: async () => {
+    const response = await api.get('/submissions/me');
     return response.data;
   },
 

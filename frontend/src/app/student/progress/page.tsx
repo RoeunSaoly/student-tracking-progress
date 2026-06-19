@@ -111,8 +111,8 @@ export default function StudentProgressPage() {
         await api.patch(`/goals/${goalId}/complete`);
         setGoals(prev => prev.map(g => g.id === goalId ? { ...g, is_completed: true } : g));
       } else {
-        // Toggle back to incomplete: put updates is_completed status
-        await api.put(`/goals/${goalId}`, { is_completed: false });
+        // Toggle back to incomplete: put updates status
+        await api.put(`/goals/${goalId}`, { status: 'in_progress' });
         setGoals(prev => prev.map(g => g.id === goalId ? { ...g, is_completed: false } : g));
       }
     } catch (err: any) {
