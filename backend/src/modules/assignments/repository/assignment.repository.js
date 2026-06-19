@@ -99,7 +99,7 @@ export const findAssignmentsForStudent = async (studentId) => {
 };
 
 export const findAllAssignments = async () => {
-  const [rows] = await db.query(
+  const [rows] = await db.sequelize.query(
     `SELECT a.*, c.name as class_name, u.username as teacher_name,
      (SELECT COUNT(*) FROM submissions s WHERE s.assignment_id = a.id) as submission_count,
      (SELECT COUNT(*) FROM enrollments e WHERE e.class_id = a.class_id AND e.status = 'active') as total_students
