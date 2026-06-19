@@ -1,4 +1,5 @@
 import * as repo from "../repository/class.repository.js";
+import * as pendingRepo from "../repository/pending-enrollment.repository.js";
 import { logActivity } from "../../logs/service/log.service.js";
 
 export const createClass = async (data, user) => {
@@ -59,16 +60,17 @@ export const joinClass = async (code, studentId) => {
     throw new Error("Class not found with this code");
   }
 
-  const isEnrolled = await repo.checkEnrollment(classData.id, studentId);
+  const isEnrolled = await pendingRepo.checkExistingEnrollment(classData.id, studentId);
   if (isEnrolled) {
-    throw new Error("You are already enrolled in this class");
+    throw new Error("You already have a pending or active enrollment in this class");
   }
 
-  await repo.enrollStudent(classData.id, studentId);
-  await logActivity(studentId, `Joined class: ${classData.name}`);
+  // Create a pending enrollment request instead of direct enrollment
+  await pendingRepo.createPendingEnrollment(classData.id, studentId);
+  await logActivity(studentId, `Requested to join class: ${classData.name}`);
 
   return {
-    message: "Joined class successfully",
+    message: "Join request submitted. Waiting for teacher approval.",
     class: classData,
   };
 };
@@ -103,4 +105,77 @@ export const getEnrolledStudents = async (classId, user) => {
   }
 
   return await repo.findEnrolledStudents(classId);
+};
+
+// Get pending join requests for a class (Teacher only)
+export const getPendingJoinRequests = async (classId, user) => {
+  const classData = await repo.findById(classId);
+  if (!classData) throw new Error("Class not found");
+
+  // Only the teacher of the class can see pending requests
+  if (String(classData.teacher_id) !== String(user.id) && user.role !== "admin") {
+    throw new Error("Unauthorized: Only the class teacher can view join requests");
+  }
+
+  return await pendingRepo.getPendingRequests(classId);
+};
+
+// Approve a student join request (Teacher only)
+export const approvePendingRequest = async (requestId, classId, user) => {
+  const classData = await repo.findById(classId);
+  if (!classData) throw new Error("Class not found");
+
+  // Only the teacher of the class can approve requests
+  if (String(classData.teacher_id) !== String(user.id) && user.role !== "admin") {
+    throw new Error("Unauthorized: Only the class teacher can approve join requests");
+  }
+
+  // Convert to integers for database query
+  const numRequestId = parseInt(requestId);
+  const numClassId = parseInt(classId);
+
+  console.log(`[DEBUG] Approving request: requestId=${numRequestId}, classId=${numClassId}`);
+
+  // Get the specific pending request
+  const request = await pendingRepo.getPendingRequestById(numRequestId, numClassId);
+
+  console.log(`[DEBUG] Found request:`, request);
+
+  if (!request) {
+    throw new Error(`Pending request not found (ID: ${numRequestId}, Class: ${numClassId})`);
+  }
+
+  console.log(`[DEBUG] Approving for student: ${request.student_id}`);
+
+  await pendingRepo.approvePendingRequest(numRequestId, numClassId, request.student_id);
+  await logActivity(user.id, `Approved join request from student ${request.student_id} to class: ${classData.name}`);
+
+  return { message: "Join request approved successfully" };
+};
+
+// Reject a student join request (Teacher only)
+export const rejectPendingRequest = async (requestId, classId, user) => {
+  const classData = await repo.findById(classId);
+  if (!classData) throw new Error("Class not found");
+
+  // Only the teacher of the class can reject requests
+  if (String(classData.teacher_id) !== String(user.id) && user.role !== "admin") {
+    throw new Error("Unauthorized: Only the class teacher can reject join requests");
+  }
+
+  // Convert to integers for database query
+  const numRequestId = parseInt(requestId);
+  const numClassId = parseInt(classId);
+
+  // Get the specific pending request
+  const request = await pendingRepo.getPendingRequestById(numRequestId, numClassId);
+
+  if (!request) {
+    throw new Error("Pending request not found");
+  }
+
+  await pendingRepo.rejectPendingRequest(numRequestId);
+  await logActivity(user.id, `Rejected join request to class: ${classData.name}`);
+
+  return { message: "Join request rejected successfully" };
 };

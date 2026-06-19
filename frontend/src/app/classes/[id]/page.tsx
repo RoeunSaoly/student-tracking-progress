@@ -12,7 +12,9 @@ import {
   UserMinusIcon,
   DocumentArrowDownIcon,
   EyeIcon,
-  TrashIcon
+  TrashIcon,
+  CheckCircleIcon,
+  XCircleIcon
 } from '@heroicons/react/24/outline';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import InviteStudentModal from '@/components/features/classes/InviteStudentModal';
@@ -40,6 +42,8 @@ export default function ClassDetailPage() {
   const [isUploadMaterialOpen, setIsUploadMaterialOpen] = useState(false);
   const [selectedAssignmentId, setSelectedAssignmentId] = useState<string | null>(null);
   const [selectedAssignmentTitle, setSelectedAssignmentTitle] = useState<string>('');
+  const [pendingRequests, setPendingRequests] = useState<any[]>([]);
+  const [pendingLoading, setPendingLoading] = useState(false);
 
   const isArchived = classData?.is_active === 0 || classData?.is_active === false;
 
@@ -90,12 +94,50 @@ export default function ClassDetailPage() {
 
       const response = await api.get(endpoint);
       setTabData(response.data);
+      
+      // Fetch pending requests if viewing students tab and user is teacher
+      if (tab === 'students' && (user?.role === 'teacher' || user?.role === 'admin')) {
+        fetchPendingRequests();
+      }
     } catch (err) {
       console.error(err);
     } finally {
       setTabLoading(false);
     }
+  }, [id, user]);
+
+  const fetchPendingRequests = useCallback(async () => {
+    try {
+      setPendingLoading(true);
+      const response = await api.get(`/classes/${id}/join-requests`);
+      setPendingRequests(response.data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setPendingLoading(false);
+    }
   }, [id]);
+
+  const handleApproveRequest = async (requestId: number) => {
+    try {
+      await api.post(`/classes/${id}/join-requests/${requestId}/approve`);
+      await fetchPendingRequests();
+      await fetchTabData('students');
+    } catch (err: any) {
+      console.error("Error approving request:", err);
+      alert(`Failed to approve request: ${err.response?.data?.message || err.message || 'Unknown error'}`);
+    }
+  };
+
+  const handleRejectRequest = async (requestId: number) => {
+    try {
+      await api.post(`/classes/${id}/join-requests/${requestId}/reject`);
+      await fetchPendingRequests();
+    } catch (err: any) {
+      console.error("Error rejecting request:", err);
+      alert(`Failed to reject request: ${err.response?.data?.message || err.message || 'Unknown error'}`);
+    }
+  };
 
   useEffect(() => {
     fetchClassDetails();
@@ -188,66 +230,138 @@ export default function ClassDetailPage() {
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
             {activeTab === 'students' && (
-              <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
-                <div className="p-6 border-b border-gray-50 flex justify-between items-center">
-                  <h3 className="font-bold text-gray-800">Enrolled Students ({tabData.length})</h3>
-                  {(user?.role === 'teacher' || user?.role === 'admin') && !isArchived && (
-                    <button 
-                      onClick={() => setIsInviteModalOpen(true)}
-                      className="text-blue-600 text-sm font-bold hover:underline flex items-center gap-1"
-                    >
-                      <PlusIcon className="h-4 w-4" />
-                      Invite Student
-                    </button>
-                  )}
-                </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left">
-                    <thead>
-                      <tr className="bg-gray-50/50">
-                        <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Student</th>
-                        <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Joined Date</th>
-                        <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
-                        {(user?.role === 'teacher' || user?.role === 'admin') && <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>}
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-gray-50">
-                      {tabData.length > 0 ? tabData.map((student) => (
-                        <tr key={student.id} className="group hover:bg-gray-50/50 transition-colors">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold uppercase">
-                                {student.username?.charAt(0) || student.first_name?.charAt(0) || 'U'}
+              <div className="space-y-8">
+                {/* Pending Join Requests Section */}
+                {(user?.role === 'teacher' || user?.role === 'admin') && (
+                  <div className="bg-white rounded-md shadow-sm border border-amber-100 overflow-hidden">
+                    <div className="p-6 border-b border-amber-50 bg-amber-50/50">
+                      <h3 className="font-bold text-gray-800 flex items-center gap-2">
+                        <div className="h-6 w-6 rounded-md bg-amber-500 text-white flex items-center justify-center text-sm">!</div>
+                        Pending Join Requests ({pendingRequests.length})
+                      </h3>
+                    </div>
+                    {pendingLoading ? (
+                      <div className="flex items-center justify-center py-12">
+                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600"></div>
+                      </div>
+                    ) : pendingRequests.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                          <thead>
+                            <tr className="bg-amber-50/30">
+                              <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Student</th>
+                              <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Requested</th>
+                              <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-amber-50">
+                            {pendingRequests.map((request) => (
+                              <tr key={request.id} className="group hover:bg-amber-50/30 transition-colors">
+                                <td className="px-6 py-4">
+                                  <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 rounded-md bg-amber-50 text-amber-600 flex items-center justify-center font-bold uppercase">
+                                      {request.username?.charAt(0) || request.first_name?.charAt(0) || 'U'}
+                                    </div>
+                                    <div>
+                                      <p className="font-bold text-gray-800">{(request.first_name || '') + ' ' + (request.last_name || '') || request.username}</p>
+                                      <p className="text-xs text-gray-400">{request.email}</p>
+                                    </div>
+                                  </div>
+                                </td>
+                                <td className="px-6 py-4 text-sm text-gray-500">
+                                  {new Date(request.requested_at).toLocaleDateString()}
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                  <div className="flex items-center justify-end gap-2">
+                                    <button 
+                                      onClick={() => handleApproveRequest(request.id)}
+                                      className="p-2 text-green-600 hover:bg-green-50 rounded-md transition-colors"
+                                      title="Approve"
+                                    >
+                                      <CheckCircleIcon className="h-5 w-5" />
+                                    </button>
+                                    <button 
+                                      onClick={() => handleRejectRequest(request.id)}
+                                      className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                                      title="Reject"
+                                    >
+                                      <XCircleIcon className="h-5 w-5" />
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="px-6 py-12 text-center text-gray-400 font-medium">No pending join requests.</div>
+                    )}
+                  </div>
+                )}
+
+                {/* Enrolled Students Section */}
+                <div className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden">
+                  <div className="p-6 border-b border-gray-50 flex justify-between items-center">
+                    <h3 className="font-bold text-gray-800">Enrolled Students ({tabData.length})</h3>
+                    {(user?.role === 'teacher' || user?.role === 'admin') && !isArchived && (
+                      <button 
+                        onClick={() => setIsInviteModalOpen(true)}
+                        className="text-blue-600 text-sm font-bold hover:underline flex items-center gap-1"
+                      >
+                        <PlusIcon className="h-4 w-4" />
+                        Invite Student
+                      </button>
+                    )}
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead>
+                        <tr className="bg-gray-50/50">
+                          <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Student</th>
+                          <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Joined Date</th>
+                          <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest">Status</th>
+                          {(user?.role === 'teacher' || user?.role === 'admin') && <th className="px-6 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest text-right">Actions</th>}
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {tabData.length > 0 ? tabData.map((student) => (
+                          <tr key={student.id} className="group hover:bg-gray-50/50 transition-colors">
+                            <td className="px-6 py-4">
+                              <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold uppercase">
+                                  {student.username?.charAt(0) || student.first_name?.charAt(0) || 'U'}
+                                </div>
+                                <div>
+                                  <p className="font-bold text-gray-800">{(student.first_name || '') + ' ' + (student.last_name || '') || student.username}</p>
+                                  <p className="text-xs text-gray-400">{student.email}</p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="font-bold text-gray-800">{(student.first_name || '') + ' ' + (student.last_name || '') || student.username}</p>
-                                <p className="text-xs text-gray-400">{student.email}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-6 py-4 text-sm text-gray-500">
-                            {new Date(student.enrolled_at).toLocaleDateString()}
-                          </td>
-                          <td className="px-6 py-4">
-                            <span className="px-3 py-1 rounded-md bg-green-50 text-green-600 text-xs font-bold uppercase tracking-tighter">
-                              {student.status || 'Active'}
-                            </span>
-                          </td>
-                          {(user?.role === 'teacher' || user?.role === 'admin') && !isArchived && (
-                            <td className="px-6 py-4 text-right">
-                              <button className="p-2 text-gray-400 hover:text-red-600 transition-colors">
-                                <UserMinusIcon className="h-5 w-5" />
-                              </button>
                             </td>
-                          )}
-                        </tr>
-                      )) : (
-                        <tr>
-                          <td colSpan={4} className="px-6 py-20 text-center text-gray-400 font-medium">No students enrolled yet.</td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                            <td className="px-6 py-4 text-sm text-gray-500">
+                              {new Date(student.enrolled_at).toLocaleDateString()}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="px-3 py-1 rounded-md bg-green-50 text-green-600 text-xs font-bold uppercase tracking-tighter">
+                                {student.status || 'Active'}
+                              </span>
+                            </td>
+                            {(user?.role === 'teacher' || user?.role === 'admin') && !isArchived && (
+                              <td className="px-6 py-4 text-right">
+                                <button className="p-2 text-gray-400 hover:text-red-600 transition-colors">
+                                  <UserMinusIcon className="h-5 w-5" />
+                                </button>
+                              </td>
+                            )}
+                          </tr>
+                        )) : (
+                          <tr>
+                            <td colSpan={4} className="px-6 py-20 text-center text-gray-400 font-medium">No students enrolled yet.</td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
               </div>
             )}

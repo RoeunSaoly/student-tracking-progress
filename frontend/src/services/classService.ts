@@ -8,6 +8,17 @@ export interface Class {
   teacherId: number;
 }
 
+export interface PendingRequest {
+  id: number;
+  student_id: number;
+  username: string;
+  email: string;
+  first_name?: string;
+  last_name?: string;
+  requested_at: string;
+  status: 'pending' | 'approved' | 'rejected';
+}
+
 export const classService = {
   getAll: async () => {
     const response = await api.get('/classes');
@@ -46,6 +57,21 @@ export const classService = {
 
   getStudentClasses: async () => {
     const response = await api.get('/classes');
+    return response.data;
+  },
+
+  getPendingRequests: async (classId: number) => {
+    const response = await api.get(`/classes/${classId}/join-requests`);
+    return response.data;
+  },
+
+  approvePendingRequest: async (classId: number, requestId: number) => {
+    const response = await api.post(`/classes/${classId}/join-requests/${requestId}/approve`);
+    return response.data;
+  },
+
+  rejectPendingRequest: async (classId: number, requestId: number) => {
+    const response = await api.post(`/classes/${classId}/join-requests/${requestId}/reject`);
     return response.data;
   }
 };

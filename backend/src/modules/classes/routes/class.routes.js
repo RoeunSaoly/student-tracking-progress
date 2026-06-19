@@ -157,4 +157,74 @@ router.put("/:id", authenticate, authorizePermission("class.create"), validateRe
  */
 router.get("/:id/students", authenticate, controller.getEnrolledStudents);
 
+/**
+ * @swagger
+ * /classes/{id}/join-requests:
+ *   get:
+ *     summary: Get pending join requests for a class (Teacher only)
+ *     tags: [Classes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: List of pending join requests
+ */
+router.get("/:id/join-requests", authenticate, controller.getPendingJoinRequests);
+
+/**
+ * @swagger
+ * /classes/{id}/join-requests/{requestId}/approve:
+ *   post:
+ *     summary: Approve a student join request (Teacher only)
+ *     tags: [Classes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: requestId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Join request approved
+ */
+router.post("/:id/join-requests/:requestId/approve", authenticate, controller.approvePendingRequest);
+
+/**
+ * @swagger
+ * /classes/{id}/join-requests/{requestId}/reject:
+ *   post:
+ *     summary: Reject a student join request (Teacher only)
+ *     tags: [Classes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *       - in: path
+ *         name: requestId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: Join request rejected
+ */
+router.post("/:id/join-requests/:requestId/reject", authenticate, controller.rejectPendingRequest);
+
 export default router;

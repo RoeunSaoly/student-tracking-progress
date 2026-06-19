@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   HomeIcon, 
   BookOpenIcon, 
@@ -11,7 +11,10 @@ import {
   PlusIcon,
   UsersIcon,
   ArrowTrendingUpIcon,
-  ClockIcon
+  ClockIcon,
+  CheckCircleIcon,
+  XCircleIcon,
+  ExclamationCircleIcon
 } from '@heroicons/react/24/outline';
 import Link from 'next/link';
 import { 
@@ -27,6 +30,7 @@ import Badge from '@/components/ui/Badge';
 import { LoadingState, ErrorState } from '@/components/ui/FeedbackStates';
 import { useDashboard } from '@/hooks/useDashboard';
 import { useNavItems } from '@/hooks/useNavItems';
+import api from '@/lib/axios';
 
 import CreateClassModal from '@/components/features/classes/CreateClassModal';
 import CreateAssignmentModal from '@/components/features/assignments/CreateAssignmentModal';
@@ -36,7 +40,43 @@ const TeacherDashboard = () => {
   const [selectedClassId, setSelectedClassId] = useState<string>('all');
   const [showCreateClass, setShowCreateClass] = useState(false);
   const [showCreateAssignment, setShowCreateAssignment] = useState(false);
+  const [allPendingRequests, setAllPendingRequests] = useState<any[]>([]);
+  const [pendingLoading, setPendingLoading] = useState(false);
   const navItems = useNavItems();
+
+  // Fetch pending requests for all classes
+  useEffect(() => {
+    const fetchAllPendingRequests = async () => {
+      if (!data?.classes || data.classes.length === 0) return;
+      
+      try {
+        setPendingLoading(true);
+        const allRequests: any[] = [];
+        
+        for (const classItem of data.classes) {
+          try {
+            const response = await api.get(`/classes/${classItem.id}/join-requests`);
+            const requestsWithClassInfo = response.data.map((req: any) => ({
+              ...req,
+              class_id: classItem.id,
+              class_name: classItem.name
+            }));
+            allRequests.push(...requestsWithClassInfo);
+          } catch (err) {
+            console.error(`Failed to fetch pending requests for class ${classItem.id}`, err);
+          }
+        }
+        
+        setAllPendingRequests(allRequests);
+      } finally {
+        setPendingLoading(false);
+      }
+    };
+
+    if (!loading) {
+      fetchAllPendingRequests();
+    }
+  }, [data?.classes, loading]);
 
   if (loading && !data) return (
     <DashboardLayout navItems={navItems} title="Instructor Portal">
@@ -78,6 +118,44 @@ const TeacherDashboard = () => {
           <StatCard key={stat.label} {...stat} />
         ))}
       </div>
+
+      {/* Pending Join Requests Section */}
+      {allPendingRequests.length > 0 && (
+        <div className="mb-8">
+          <Card title={`Pending Join Requests (${allPendingRequests.length})`}>
+            <div className="space-y-3">
+              {allPendingRequests.slice(0, 5).map((request) => (
+                <Link key={`${request.class_id}-${request.id}`} href={`/classes/${request.class_id}`}>
+                  <div className="p-4 rounded-lg border border-amber-100 bg-amber-50/50 hover:bg-amber-50 hover:border-amber-200 transition-colors cursor-pointer group">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-md bg-amber-500 text-white flex items-center justify-center font-bold uppercase flex-shrink-0">
+                          {request.username?.charAt(0) || 'U'}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-semibold text-gray-800 truncate">{(request.first_name || '') + ' ' + (request.last_name || '') || request.username}</p>
+                          <p className="text-xs text-gray-500">{request.class_name}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-gray-500 whitespace-nowrap">{new Date(request.requested_at).toLocaleDateString()}</span>
+                        <ExclamationCircleIcon className="h-5 w-5 text-amber-500" />
+                      </div>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+              {allPendingRequests.length > 5 && (
+                <Link href="/teacher/classes">
+                  <p className="text-sm font-semibold text-blue-600 hover:text-blue-700 text-center py-2">
+                    View all {allPendingRequests.length} pending requests
+                  </p>
+                </Link>
+              )}
+            </div>
+          </Card>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         <div className="lg:col-span-8 space-y-8">
