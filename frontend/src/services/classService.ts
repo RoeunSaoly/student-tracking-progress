@@ -3,9 +3,11 @@ import api from '../lib/axios';
 export interface Class {
   id: number;
   name: string;
+  name: string;
   description?: string;
   code: string;
   teacherId: number;
+  cover_image?: string;
 }
 
 export interface PendingRequest {
@@ -30,8 +32,11 @@ export const classService = {
     return response.data;
   },
 
-  create: async (data: Partial<Class>) => {
-    const response = await api.post('/classes', data);
+  create: async (data: any) => {
+    // If it's FormData, it will be sent correctly, but let's handle the Content-Type automatically by not explicitly setting it for axios so it can boundary it
+    const response = await api.post('/classes', data, {
+      headers: data instanceof FormData ? { 'Content-Type': 'multipart/form-data' } : {}
+    });
     return response.data;
   },
 

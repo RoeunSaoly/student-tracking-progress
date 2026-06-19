@@ -18,9 +18,11 @@ const CreateAssignmentModal = ({ isOpen, onClose, onSuccess, defaultClassId }: C
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    available_from: '',
     due_date: '',
     max_score: 100,
-    class_id: defaultClassId || ''
+    class_id: defaultClassId || '',
+    submission_type: 'file'
   });
   const [error, setError] = useState('');
 
@@ -60,9 +62,11 @@ const CreateAssignmentModal = ({ isOpen, onClose, onSuccess, defaultClassId }: C
       setFormData({
         title: '',
         description: '',
+        available_from: '',
         due_date: '',
         max_score: 100,
-        class_id: defaultClassId || classes[0]?.id || ''
+        class_id: defaultClassId || classes[0]?.id || '',
+        submission_type: 'file'
       });
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to create assignment');
@@ -120,17 +124,50 @@ const CreateAssignmentModal = ({ isOpen, onClose, onSuccess, defaultClassId }: C
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Due Date</label>
+            <div className="flex justify-between items-center mb-2 ml-1">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Appear Time</label>
+              <button 
+                type="button" 
+                onClick={() => setFormData({...formData, available_from: new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)})}
+                className="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-widest px-2 py-0.5 bg-blue-50 rounded-md"
+              >
+                Now
+              </button>
+            </div>
             <input 
-              type="date" 
+              type="datetime-local" 
               className="w-full px-5 py-4 rounded-md bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-800 font-medium"
-              value={formData.due_date}
-              onChange={(e) => setFormData({...formData, due_date: e.target.value})}
-              required
+              value={formData.available_from}
+              onChange={(e) => {
+                setFormData({...formData, available_from: e.target.value});
+                e.target.blur();
+              }}
             />
           </div>
           <div>
-            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Max Score</label>
+            <div className="flex justify-between items-center mb-2 ml-1">
+              <label className="text-xs font-bold text-gray-400 uppercase tracking-widest">Due Date & Time</label>
+              <button 
+                type="button" 
+                onClick={() => setFormData({...formData, due_date: new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)})}
+                className="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-widest px-2 py-0.5 bg-blue-50 rounded-md"
+              >
+                Now
+              </button>
+            </div>
+            <input 
+              type="datetime-local" 
+              className="w-full px-5 py-4 rounded-md bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-800 font-medium"
+              value={formData.due_date}
+              onChange={(e) => {
+                setFormData({...formData, due_date: e.target.value});
+                e.target.blur();
+              }}
+              required
+            />
+          </div>
+          <div className="col-span-2">
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Max Points</label>
             <input 
               type="number" 
               className="w-full px-5 py-4 rounded-md bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-800 font-medium"
@@ -138,6 +175,19 @@ const CreateAssignmentModal = ({ isOpen, onClose, onSuccess, defaultClassId }: C
               onChange={(e) => setFormData({...formData, max_score: parseInt(e.target.value)})}
               required
             />
+          </div>
+          <div className="col-span-2">
+            <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2 ml-1">Submission Type</label>
+            <select 
+              className="w-full px-5 py-4 rounded-md bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-gray-800 font-medium"
+              value={formData.submission_type}
+              onChange={(e) => setFormData({...formData, submission_type: e.target.value})}
+              required
+            >
+              <option value="file">File Upload Only</option>
+              <option value="text">Text / Link Only</option>
+              <option value="both">Both File and Text</option>
+            </select>
           </div>
         </div>
 

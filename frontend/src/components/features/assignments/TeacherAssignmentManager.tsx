@@ -36,9 +36,11 @@ const AssignmentManager = () => {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    available_from: '',
     due_date: '',
     max_score: 100,
-    class_id: ''
+    class_id: '',
+    submission_type: 'file'
   });
 
   // Dialog modal state
@@ -71,18 +73,22 @@ const AssignmentManager = () => {
       setFormData({
         title: assignment.title,
         description: assignment.description || '',
-        due_date: assignment.due_date.split('T')[0],
+        available_from: assignment.available_from ? new Date(assignment.available_from).toISOString().slice(0, 16) : '',
+        due_date: assignment.due_date ? new Date(assignment.due_date).toISOString().slice(0, 16) : '',
         max_score: assignment.max_score,
-        class_id: assignment.class_id
+        class_id: assignment.class_id,
+        submission_type: assignment.submission_type || 'file'
       });
     } else {
       setEditingAssignment(null);
       setFormData({
         title: '',
         description: '',
+        available_from: '',
         due_date: '',
         max_score: 100,
-        class_id: activeClasses[0]?.id || ''
+        class_id: activeClasses[0]?.id || '',
+        submission_type: 'file'
       });
     }
     setIsModalOpen(true);
@@ -302,16 +308,49 @@ const AssignmentManager = () => {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Due Date</label>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Appear Time</label>
+                <button 
+                  type="button" 
+                  onClick={() => setFormData({...formData, available_from: new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)})}
+                  className="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-widest px-2 py-0.5 bg-blue-50 rounded-md"
+                >
+                  Now
+                </button>
+              </div>
               <input 
-                type="date" 
+                type="datetime-local" 
                 className="w-full px-4 py-3 rounded-md border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
-                value={formData.due_date}
-                onChange={(e) => setFormData({...formData, due_date: e.target.value})}
-                required
+                value={formData.available_from}
+                onChange={(e) => {
+                  setFormData({...formData, available_from: e.target.value});
+                  e.target.blur();
+                }}
               />
             </div>
             <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Due Date & Time</label>
+                <button 
+                  type="button" 
+                  onClick={() => setFormData({...formData, due_date: new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16)})}
+                  className="text-[10px] font-bold text-blue-600 hover:text-blue-700 uppercase tracking-widest px-2 py-0.5 bg-blue-50 rounded-md"
+                >
+                  Now
+                </button>
+              </div>
+              <input 
+                type="datetime-local" 
+                className="w-full px-4 py-3 rounded-md border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                value={formData.due_date}
+                onChange={(e) => {
+                  setFormData({...formData, due_date: e.target.value});
+                  e.target.blur();
+                }}
+                required
+              />
+            </div>
+            <div className="col-span-2 sm:col-span-1">
               <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Max Points</label>
               <input 
                 type="number" 
@@ -320,6 +359,19 @@ const AssignmentManager = () => {
                 onChange={(e) => setFormData({...formData, max_score: parseInt(e.target.value)})}
                 required
               />
+            </div>
+            <div className="col-span-2 sm:col-span-1">
+              <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-2">Submission Type</label>
+              <select 
+                className="w-full px-4 py-3 rounded-md border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm"
+                value={formData.submission_type}
+                onChange={(e) => setFormData({...formData, submission_type: e.target.value})}
+                required
+              >
+                <option value="file">File Upload Only</option>
+                <option value="text">Text / Link Only</option>
+                <option value="both">Both File and Text</option>
+              </select>
             </div>
           </div>
           <div className="flex gap-4 mt-8">

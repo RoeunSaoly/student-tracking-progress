@@ -1,9 +1,9 @@
 import db from "../../../database/index.js";
 import { Op } from "sequelize";
 
-export const createClass = async ({ teacher_id, name, code, description }) => {
+export const createClass = async ({ teacher_id, name, code, description, cover_image }) => {
   const newClass = await db.models.classes.create({
-    teacher_id, name, code, description
+    teacher_id, name, code, description, cover_image
   });
   return newClass.id;
 };
@@ -111,6 +111,14 @@ export const findByStudent = async (studentId) => {
           [
             db.sequelize.literal(`(SELECT COUNT(*) FROM submissions s JOIN assignments a ON s.assignment_id = a.id WHERE a.class_id = class.id AND s.student_id = ${db.sequelize.escape(studentId)})`),
             'completed_assignments'
+          ],
+          [
+            db.sequelize.literal(`(SELECT SUM(g.score) FROM grades g JOIN submissions s ON g.submission_id = s.id JOIN assignments a ON s.assignment_id = a.id WHERE a.class_id = class.id AND s.student_id = ${db.sequelize.escape(studentId)})`),
+            'total_earned_score'
+          ],
+          [
+            db.sequelize.literal(`(SELECT SUM(a.max_score) FROM grades g JOIN submissions s ON g.submission_id = s.id JOIN assignments a ON s.assignment_id = a.id WHERE a.class_id = class.id AND s.student_id = ${db.sequelize.escape(studentId)})`),
+            'total_max_score'
           ]
         ]
       }

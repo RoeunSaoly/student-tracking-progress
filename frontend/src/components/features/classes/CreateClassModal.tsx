@@ -16,6 +16,7 @@ const CreateClassModal = ({ isOpen, onClose, onSuccess }: CreateClassModalProps)
     name: '',
     description: ''
   });
+  const [coverImage, setCoverImage] = useState<File | null>(null);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,10 +26,23 @@ const CreateClassModal = ({ isOpen, onClose, onSuccess }: CreateClassModalProps)
     try {
       setLoading(true);
       setError('');
-      await api.post('/classes', formData);
+      
+      const payload = new FormData();
+      payload.append('name', formData.name);
+      payload.append('description', formData.description);
+      if (coverImage) {
+        payload.append('cover_image', coverImage);
+      }
+
+      await api.post('/classes', payload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
       onSuccess();
       onClose();
       setFormData({ name: '', description: '' });
+      setCoverImage(null);
     } catch (err: any) {
       setError(err.response?.data?.message || 'Failed to create class');
     } finally {
@@ -63,6 +77,17 @@ const CreateClassModal = ({ isOpen, onClose, onSuccess }: CreateClassModalProps)
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           />
+        </div>
+        <div className="space-y-2">
+          <label className="text-xs font-bold text-gray-500 uppercase tracking-widest ml-1">Class Cover Image (Optional)</label>
+          <div className="flex items-center gap-4">
+            <input
+              type="file"
+              accept="image/*"
+              className="w-full px-5 py-3 rounded-md bg-gray-50 border border-gray-100 focus:bg-white focus:ring-2 focus:ring-blue-500 outline-none transition-all text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-bold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+              onChange={(e) => setCoverImage(e.target.files?.[0] || null)}
+            />
+          </div>
         </div>
         <button
           type="submit"

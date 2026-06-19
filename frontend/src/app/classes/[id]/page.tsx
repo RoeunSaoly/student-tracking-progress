@@ -14,7 +14,10 @@ import {
   EyeIcon,
   TrashIcon,
   CheckCircleIcon,
-  XCircleIcon
+  XCircleIcon,
+  DocumentIcon,
+  PhotoIcon,
+  ArchiveBoxIcon
 } from '@heroicons/react/24/outline';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import InviteStudentModal from '@/components/features/classes/InviteStudentModal';
@@ -422,8 +425,8 @@ export default function ClassDetailPage() {
             )}
 
             {activeTab === 'materials' && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div className="md:col-span-2 lg:col-span-3 flex justify-between items-center mb-4">
+              <div className="space-y-4">
+                <div className="flex justify-between items-center mb-6">
                   <h3 className="text-xl font-bold text-gray-800">Learning Materials</h3>
                   {(user?.role === 'teacher' || user?.role === 'admin') && !isArchived && (
                     <button 
@@ -435,42 +438,81 @@ export default function ClassDetailPage() {
                     </button>
                   )}
                 </div>
-                {tabData.length > 0 ? tabData.map((material) => (
-                  <div key={material.id} className="bg-white rounded-md p-6 shadow-sm border border-gray-100 hover:shadow-lg transition-all group">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="h-12 w-12 rounded-md bg-indigo-50 text-indigo-600 flex items-center justify-center">
-                        <BookOpenIcon className="h-6 w-6" />
-                      </div>
-                      {(user?.role === 'teacher' || user?.role === 'admin') && !isArchived && (
-                        <button className="p-2 text-gray-300 hover:text-red-500 transition-colors">
-                          <TrashIcon className="h-5 w-5" />
-                        </button>
-                      )}
-                    </div>
-                    <h4 className="font-bold text-gray-800 mb-2 truncate group-hover:text-indigo-600 transition-colors">{material.title}</h4>
-                    <p className="text-xs text-gray-400 font-medium mb-6 line-clamp-2">{material.description || 'No description provided.'}</p>
-                    <div className="flex gap-2 mt-auto">
-                      <button 
-                        onClick={() => window.open(getAssetUrl(material.file_url), '_blank')}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md bg-indigo-50 text-indigo-600 font-bold text-xs uppercase tracking-widest hover:bg-indigo-100 transition-all"
-                      >
-                        <EyeIcon className="h-4 w-4" />
-                        View
-                      </button>
-                      <button 
-                        onClick={(e) => {
-                          e.preventDefault();
-                          forceDownload(getAssetUrl(material.file_url), material.title || 'material');
-                        }}
-                        className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-md bg-gray-50 text-gray-600 font-bold text-xs uppercase tracking-widest hover:bg-gray-100 transition-all border border-gray-200"
-                      >
-                        <DocumentArrowDownIcon className="h-4 w-4" />
-                        Save
-                      </button>
-                    </div>
+                {tabData.length > 0 ? (
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
+                    {tabData.map((material) => {
+                      const extension = material.file_url?.split('.').pop()?.toLowerCase();
+                      let Icon = DocumentIcon;
+                      let colorClass = "bg-gray-50 text-gray-600";
+                      
+                      if (['pdf'].includes(extension)) {
+                        colorClass = "bg-red-50 text-red-600";
+                      } else if (['doc', 'docx'].includes(extension)) {
+                        colorClass = "bg-blue-50 text-blue-600";
+                      } else if (['ppt', 'pptx'].includes(extension)) {
+                        colorClass = "bg-orange-50 text-orange-600";
+                      } else if (['jpg', 'jpeg', 'png', 'gif'].includes(extension)) {
+                        Icon = PhotoIcon;
+                        colorClass = "bg-purple-50 text-purple-600";
+                      } else if (['zip', 'rar'].includes(extension)) {
+                        Icon = ArchiveBoxIcon;
+                        colorClass = "bg-amber-50 text-amber-600";
+                      }
+
+                      return (
+                        <div key={material.id} className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-gray-50/50 transition-colors group">
+                          <div className="flex items-start gap-4">
+                            <div className={`h-12 w-12 rounded-lg flex items-center justify-center shrink-0 ${colorClass}`}>
+                              <Icon className="h-6 w-6" />
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-gray-800 group-hover:text-indigo-600 transition-colors text-lg">{material.title}</h4>
+                              <p className="text-sm text-gray-500 mt-1 max-w-2xl">{material.description || 'No description provided.'}</p>
+                              <div className="flex items-center gap-4 mt-2">
+                                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest bg-white border border-gray-100 px-2 py-0.5 rounded-md shadow-sm">
+                                  {extension || 'FILE'}
+                                </span>
+                                {material.uploaded_at && (
+                                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest flex items-center gap-1">
+                                    <span className="w-1 h-1 rounded-full bg-gray-300"></span>
+                                    {new Date(material.uploaded_at).toLocaleDateString()} at {new Date(material.uploaded_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <div className="flex items-center gap-2 md:w-auto w-full">
+                            <button 
+                              onClick={() => window.open(getAssetUrl(material.file_url), '_blank')}
+                              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2 rounded-lg bg-white border border-gray-200 text-gray-700 font-bold text-sm hover:bg-gray-50 hover:border-gray-300 transition-all shadow-sm"
+                            >
+                              <EyeIcon className="h-4 w-4 text-gray-400" />
+                              View
+                            </button>
+                            <button 
+                              onClick={(e) => {
+                                e.preventDefault();
+                                forceDownload(getAssetUrl(material.file_url), material.title || 'material');
+                              }}
+                              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-5 py-2 rounded-lg bg-indigo-600 text-white font-bold text-sm hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100"
+                            >
+                              <DocumentArrowDownIcon className="h-4 w-4" />
+                              Download
+                            </button>
+                            
+                            {(user?.role === 'teacher' || user?.role === 'admin') && !isArchived && (
+                              <button className="p-2 text-gray-300 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all ml-1">
+                                <TrashIcon className="h-5 w-5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                )) : (
-                  <div className="md:col-span-2 lg:col-span-3 bg-white rounded-md p-20 text-center border border-dashed border-gray-200">
+                ) : (
+                  <div className="bg-white rounded-md p-20 text-center border border-dashed border-gray-200">
                     <BookOpenIcon className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                     <p className="text-gray-400 font-medium">No materials shared yet.</p>
                   </div>

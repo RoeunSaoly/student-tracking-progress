@@ -3,7 +3,11 @@ import { logActivity } from "../../logs/service/log.service.js"; // Updated path
 import { asyncHandler } from "../../../shared/utils/asyncHandler.js";
 
 export const createClass = asyncHandler(async (req, res) => {
-    const result = await service.createClass(req.body, req.user);
+    const data = { ...req.body };
+    if (req.file) {
+        data.cover_image = `/uploads/covers/${req.file.filename}`;
+    }
+    const result = await service.createClass(data, req.user);
     await logActivity(req.user.id, `Created class: ${req.body.name}`);
     res.status(201).json(result);
 });
@@ -43,7 +47,11 @@ export const removeStudent = asyncHandler(async (req, res) => {
 });
 
 export const updateClass = asyncHandler(async (req, res) => {
-    const result = await service.updateClass(req.params.id, req.body, req.user);
+    const data = { ...req.body };
+    if (req.file) {
+        data.cover_image = `/uploads/covers/${req.file.filename}`;
+    }
+    const result = await service.updateClass(req.params.id, data, req.user);
     res.json(result);
 });
 
