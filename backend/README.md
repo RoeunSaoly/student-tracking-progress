@@ -1,4 +1,6 @@
-student-tracking-system-backend/
+# student-tracking-system-backend/
+
+```bash
 src/
 ├── app/                             # 🚀 App bootstrap (Express setup)
 │   ├── app.js
@@ -159,3 +161,4 @@ src/
     ├── migrate.js
     ├── seed.js
     └── reset.js
+```
