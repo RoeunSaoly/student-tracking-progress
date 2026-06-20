@@ -112,7 +112,7 @@ const StudentDashboard = () => {
   const stats = [
     { label: "Active Classes", value: data?.summary?.totalClasses || 0, icon: AcademicCapIcon, color: "bg-gray-100", textColor: "text-gray-700", bgColor: "bg-white" },
     { label: "Assignments", value: data?.summary?.totalAssignments || 0, icon: DocumentTextIcon, color: "bg-gray-100", textColor: "text-gray-700", bgColor: "bg-white" },
-    { label: "Avg. Grade", value: data?.summary?.averageGrade !== "N/A" ? `${data.summary.averageGrade}%` : "N/A", icon: ChartBarIcon, color: "bg-gray-100", textColor: "text-gray-700", bgColor: "bg-white" },
+    { label: "Avg. Grade", value: data?.summary?.totalMaxScore > 0 ? `${data.summary.totalEarnedScore}/${data.summary.totalMaxScore} (${data.summary.averageGrade}%)` : "0/0 (0%)", icon: ChartBarIcon, color: "bg-gray-100", textColor: "text-gray-700", bgColor: "bg-white" },
     { label: "Submission Rate", value: `${data?.summary?.progressPercentage || 0}%`, icon: CheckBadgeIcon, color: "bg-gray-100", textColor: "text-gray-700", bgColor: "bg-white" },
   ];
 
@@ -190,7 +190,11 @@ const StudentDashboard = () => {
                       assignment.submission_status === 'graded' ? 'bg-green-50 text-green-700 border-green-200' :
                       assignment.submission_status === 'submitted' ? 'bg-gray-100 text-gray-700 border-gray-200' : 'bg-white text-gray-600 border-gray-200'
                     }`}>
-                      {assignment.submission_status || 'Pending'}
+                      {assignment.submission_status === 'graded' ? (
+                        <span>Score: {assignment.grade}/{assignment.max_score}</span>
+                      ) : (
+                        assignment.submission_status || 'Pending'
+                      )}
                     </div>
                   </div>
                 </div>
@@ -231,7 +235,7 @@ const StudentDashboard = () => {
           <Card variant="dark" title="Performance Progress">
             <PerformanceCircle 
               percentage={parseFloat(data?.summary?.averageGrade) || 0} 
-              sublabel={`Average score across ${data?.summary?.totalClasses || 0} active courses`}
+              sublabel={`Score: ${data?.summary?.totalEarnedScore || 0}/${data?.summary?.totalMaxScore || 0} across ${data?.summary?.totalClasses || 0} active courses`}
             />
           </Card>
 

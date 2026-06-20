@@ -33,4 +33,7 @@ export const messageUpload = createUploader("uploads/messages", "message");
 // Named export: document uploader for verifications
 export const documentUpload = createUploader("uploads/documents", "document");
 
+// Named export: class cover uploader
+export const classCoverUpload = createUploader("uploads/covers", "cover");
+
 export default upload;

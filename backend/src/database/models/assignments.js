@@ -26,6 +26,10 @@ export default class assignments extends Model {
       type: DataTypes.TEXT,
       allowNull: true
     },
+    available_from: {
+      type: DataTypes.DATE,
+      allowNull: true
+    },
     due_date: {
       type: DataTypes.DATE,
       allowNull: true
@@ -34,6 +38,11 @@ export default class assignments extends Model {
       type: DataTypes.INTEGER,
       allowNull: true,
       defaultValue: 100
+    },
+    submission_type: {
+      type: DataTypes.STRING(20),
+      allowNull: true,
+      defaultValue: 'file'
     }
   }, {
     sequelize,

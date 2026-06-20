@@ -30,6 +30,10 @@ export default class submissions extends Model {
       type: DataTypes.STRING(500),
       allowNull: true
     },
+    content: {
+      type: DataTypes.TEXT,
+      allowNull: true
+    },
     status: {
       type: DataTypes.ENUM('submitted','late','pending','graded'),
       allowNull: true,

@@ -35,6 +35,10 @@ export default class classes extends Model {
       type: DataTypes.BOOLEAN,
       allowNull: true,
       defaultValue: 1
+    },
+    cover_image: {
+      type: DataTypes.STRING(255),
+      allowNull: true
     }
   }, {
     sequelize,

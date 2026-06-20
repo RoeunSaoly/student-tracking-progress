@@ -86,8 +86,8 @@ const UploadMaterialModal = ({ isOpen, onClose, onSuccess, classId }: UploadMate
         <FileUploadZone 
           label="DOCUMENT FILE" 
           onFileSelect={setFile}
-          accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.png"
-          helperText="PDF, DOCX, PPTX, JPG, PNG up to 10MB"
+          accept=".pdf,.doc,.docx,.ppt,.pptx,.jpg,.png,.zip"
+          helperText="PDF, DOCX, PPTX, JPG, PNG, ZIP up to 10MB"
         />
 
         <div className="flex gap-4 pt-4">

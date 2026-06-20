@@ -33,10 +33,15 @@ export const getStudentAssignments = async (studentId) => {
 
 export const getStudentPerformance = async (studentId) => {
   const [rows] = await db.sequelize.query(
-    `SELECT AVG(g.score) as average_grade, COUNT(g.id) as graded_count
+    `SELECT 
+      (SUM(g.score) / SUM(a.max_score) * 100) as average_grade, 
+      SUM(g.score) as total_earned_score,
+      SUM(a.max_score) as total_max_score,
+      COUNT(g.id) as graded_count
      FROM grades g
      JOIN submissions s ON g.submission_id = s.id
-     WHERE s.student_id = ?`,
+     JOIN assignments a ON s.assignment_id = a.id
+     WHERE s.student_id = ? AND a.max_score > 0`,
     { replacements: [studentId] }
   );
   return rows[0];

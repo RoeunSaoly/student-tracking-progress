@@ -32,7 +32,9 @@ export const getStudentDashboard = async (studentId) => {
       totalAssignments,
       submittedAssignments,
       progressPercentage,
-      averageGrade: performance.average_grade !== null ? parseFloat(performance.average_grade).toFixed(2) : "N/A",
+      averageGrade: performance.average_grade !== null ? parseFloat(performance.average_grade).toFixed(2) : "0",
+      totalEarnedScore: Number(performance.total_earned_score || 0),
+      totalMaxScore: Number(performance.total_max_score || 0),
       goalsCompleted: `${Number(goalStats.completed_goals || 0)}/${Number(goalStats.total_goals || 0)}`
     },
     performance: {

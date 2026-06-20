@@ -122,9 +122,13 @@ const ClassList = () => {
             <p className="text-gray-400 font-medium">No classes found. Create one to get started!</p>
           </div>
         ) : filteredClasses.map((item) => (
-          <div key={item.id} className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden group hover:shadow-xl transition-all duration-300 relative">
-            <div className={`h-24 ${item.is_active === 0 || item.is_active === false ? 'bg-gray-500' : 'bg-blue-500'} p-6 relative`}>
-              <div className="absolute right-4 top-4">
+          <div key={item.id} className="bg-white rounded-md shadow-sm border border-gray-100 overflow-hidden group hover:shadow-xl transition-all duration-300 relative flex flex-col">
+            <div 
+              className={`h-32 ${item.is_active === 0 || item.is_active === false ? 'bg-gray-500' : 'bg-blue-500'} p-6 relative bg-cover bg-center shrink-0`}
+              style={item.cover_image ? { backgroundImage: `url(http://localhost:5002${item.cover_image})` } : undefined}
+            >
+              {item.cover_image && <div className="absolute inset-0 bg-black/40 group-hover:bg-black/30 transition-colors"></div>}
+              <div className="absolute right-4 top-4 z-10">
                 <button 
                   onClick={(e) => {
                     e.stopPropagation();
@@ -159,17 +163,17 @@ const ClassList = () => {
                   </div>
                 )}
               </div>
-              <div className="inline-flex items-center px-2 py-1 bg-white/20 rounded-md text-white text-[10px] font-bold uppercase tracking-widest backdrop-blur-md">
+              <div className="inline-flex items-center px-2 py-1 bg-white/20 rounded-md text-white text-[10px] font-bold uppercase tracking-widest backdrop-blur-md relative z-10">
                 {item.code}
               </div>
             </div>
-            <div className="p-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-1 group-hover:text-blue-600 transition-colors">{item.name}</h3>
-              <p className="text-sm text-gray-500 mb-6 flex items-center gap-2 line-clamp-2 h-10">
+            <div className="p-6 flex-1 flex flex-col">
+              <h3 className="text-lg font-bold text-gray-800 mb-1 group-hover:text-blue-600 transition-colors line-clamp-1">{item.name}</h3>
+              <p className="text-sm text-gray-500 mb-6 line-clamp-2 min-h-[40px]">
                 {item.description || 'No description provided'}
               </p>
               
-              <div className="flex items-center justify-between pt-6 border-t border-gray-50">
+              <div className="flex items-center justify-between pt-6 border-t border-gray-50 mt-auto">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-bold text-gray-400">{item.student_count || 0} Enrolled</span>
                 </div>

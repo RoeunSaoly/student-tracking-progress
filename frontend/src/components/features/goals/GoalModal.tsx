@@ -14,7 +14,7 @@ interface GoalModalProps {
 const GoalModal = ({ isOpen, onClose, onSave, goal }: GoalModalProps) => {
   const [title, setTitle] = useState('');
   const [targetDate, setTargetDate] = useState('');
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState<number | string>(0);
   const [type, setType] = useState('general');
   const [assignmentId, setAssignmentId] = useState<string | number>('');
   const [assignments, setAssignments] = useState<any[]>([]);
@@ -60,7 +60,7 @@ const GoalModal = ({ isOpen, onClose, onSave, goal }: GoalModalProps) => {
     onSave({
       title,
       target_date: targetDate,
-      progress,
+      progress: progress === '' ? 0 : Number(progress),
       type,
       assignment_id: assignmentId === '' ? null : parseInt(assignmentId.toString()),
     });
@@ -110,7 +110,7 @@ const GoalModal = ({ isOpen, onClose, onSave, goal }: GoalModalProps) => {
                 max="100"
                 className="w-full px-4 py-3 rounded-md border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition-all"
                 value={progress}
-                onChange={(e) => setProgress(parseInt(e.target.value))}
+                onChange={(e) => setProgress(e.target.value === '' ? '' : parseInt(e.target.value))}
               />
             </div>
           </div>

@@ -41,6 +41,17 @@ const GradingPanel = ({ assignmentId }: { assignmentId: string }) => {
 
   const isArchived = assignment?.class_is_active === 0 || assignment?.class_is_active === false;
 
+  const renderContentWithLinks = (text: string) => {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const parts = text.split(urlRegex);
+    return parts.map((part, i) => {
+      if (part.match(urlRegex)) {
+        return <a key={i} href={part} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium break-all">{part}</a>;
+      }
+      return part;
+    });
+  };
+
   useEffect(() => {
     fetchData();
   }, [assignmentId]);
@@ -167,15 +178,17 @@ const GradingPanel = ({ assignmentId }: { assignmentId: string }) => {
                     </td>
                     <td className="px-8 py-6 text-right">
                       <div className="flex justify-end gap-2">
-                        <a 
-                          href={`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5002'}${sub.file_path}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="p-2.5 bg-gray-50 text-gray-400 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-all border border-transparent hover:border-blue-100"
-                          title="View File"
-                        >
-                          <EyeIcon className="h-5 w-5" />
-                        </a>
+                        {sub.file_path && (
+                          <a 
+                            href={`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5002'}${sub.file_path}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="p-2.5 bg-gray-50 text-gray-400 rounded-md hover:bg-blue-50 hover:text-blue-600 transition-all border border-transparent hover:border-blue-100"
+                            title="View File"
+                          >
+                            <EyeIcon className="h-5 w-5" />
+                          </a>
+                        )}
                         {!isArchived && (
                           <button 
                             onClick={() => handleOpenGrading(sub)}
@@ -215,24 +228,33 @@ const GradingPanel = ({ assignmentId }: { assignmentId: string }) => {
       >
         {selectedSubmission && (
           <div className="space-y-6">
-            <div className="bg-gray-50 rounded-md p-5 border border-dashed border-gray-200 flex items-center gap-4">
-               <div className="h-12 w-12 bg-white rounded-md shadow-sm flex items-center justify-center text-blue-600">
-                  <DocumentIcon className="h-6 w-6" />
-                </div>
-                <div className="flex-1">
-                  <p className="text-sm font-bold text-gray-800 truncate max-w-[200px]">{selectedSubmission.file_path.split('/').pop()}</p>
-                  <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">SUBMITTED FILE</p>
-                </div>
-                <a 
-                  href={`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5002'}${selectedSubmission.file_path}`} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
-                >
-                  <ArrowDownTrayIcon className="h-3 w-3" />
-                  Download
-                </a>
-            </div>
+            {selectedSubmission.file_path && (
+              <div className="bg-gray-50 rounded-md p-5 border border-dashed border-gray-200 flex items-center gap-4">
+                 <div className="h-12 w-12 bg-white rounded-md shadow-sm flex items-center justify-center text-blue-600">
+                    <DocumentIcon className="h-6 w-6" />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-sm font-bold text-gray-800 truncate max-w-[200px]">{selectedSubmission.file_path.split('/').pop()}</p>
+                    <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">SUBMITTED FILE</p>
+                  </div>
+                  <a 
+                    href={`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5002'}${selectedSubmission.file_path}`} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-xs font-bold text-blue-600 hover:underline flex items-center gap-1"
+                  >
+                    <ArrowDownTrayIcon className="h-3 w-3" />
+                    Download
+                  </a>
+              </div>
+            )}
+            
+            {selectedSubmission.content && (
+              <div className="bg-gray-50 rounded-md p-5 border border-dashed border-gray-200">
+                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-widest mb-2">TEXT SUBMISSION / LINK</p>
+                <div className="text-sm text-gray-800 whitespace-pre-wrap">{renderContentWithLinks(selectedSubmission.content)}</div>
+              </div>
+            )}
 
             <div>
               <label className="block text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 px-1">Score (max {assignment?.max_score})</label>

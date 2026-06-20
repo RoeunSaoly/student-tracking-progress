@@ -2,17 +2,17 @@ import db from "../../../database/index.js";
 
 // Assignments
 export const createAssignment = async (data) => {
-  const { class_id, title, description, due_date, max_score } = data;
+  const { class_id, title, description, available_from, due_date, max_score, submission_type } = data;
   const assignment = await db.models.assignments.create({
-    class_id, title, description, due_date, max_score
+    class_id, title, description, available_from, due_date, max_score, submission_type
   });
   return assignment.id;
 };
 
 export const updateAssignment = async (id, data) => {
-  const { title, description, due_date, max_score } = data;
+  const { title, description, available_from, due_date, max_score, submission_type } = data;
   await db.models.assignments.update({
-    title, description, due_date, max_score
+    title, description, available_from, due_date, max_score, submission_type
   }, { where: { id } });
 };
 
@@ -61,6 +61,12 @@ export const findAssignmentsForTeacher = async (teacherId) => {
 
 export const findAssignmentsForStudent = async (studentId) => {
   const assignments = await db.models.assignments.findAll({
+    where: {
+      [db.Sequelize.Op.or]: [
+        { available_from: null },
+        { available_from: { [db.Sequelize.Op.lte]: new Date() } }
+      ]
+    },
     include: [{
       model: db.models.classes,
       as: 'class',
@@ -101,7 +107,8 @@ export const findAssignmentsForStudent = async (studentId) => {
 export const findAllAssignments = async () => {
   const [rows] = await db.sequelize.query(
     `SELECT a.*, c.name as class_name, u.username as teacher_name,
-     (SELECT COUNT(*) FROM submissions s WHERE s.assignment_id = a.id) as submission_count,
+     (SELECT COUNT(*) FROM submissions s WHERE s.assignment_id = a.id) as submitted_count,
+     (SELECT COUNT(*) FROM submissions s WHERE s.assignment_id = a.id AND (s.status = 'late' OR s.submitted_at > a.due_date)) as late_count,
      (SELECT COUNT(*) FROM enrollments e WHERE e.class_id = a.class_id AND e.status = 'active') as total_students
      FROM assignments a
      JOIN classes c ON a.class_id = c.id
