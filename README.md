@@ -1,241 +1,222 @@
-# Community Student Progress Tracking System
+# Student Tracking Progress
 
-A full-stack web application for tracking and managing student progress in a learning community. The system allows administrators and mentors to monitor student performance, manage courses, record attendance, and generate reports.
+Full-stack student progress tracking system for admins, teachers, and students. The application manages classes, enrollments, assignments, submissions, grades, learning goals, messaging, notifications, teacher verification, dashboard analytics, and audit logs.
 
-The project uses a **modern architecture** with:
+## Tech Stack
 
-- **Frontend:** Next.js + TailwindCSS  
-- **Backend:** Node.js + Express.js (REST API)  
-- **Database:** MySQL
-- **Real-time:** Socket.io
-- **API Documentation:** Swagger UI
+### Frontend
 
----
+- Next.js 15 with React 19 and TypeScript
+- Tailwind CSS 4
+- Axios for API calls
+- Socket.IO client for realtime updates
+- Recharts, Framer Motion, Headless UI, Heroicons, Lucide React
 
-# Table of Contents
+### Backend
 
-- [Project Overview](#project-overview)
-- [System Architecture](#system-architecture)
-- [Tech Stack](#tech-stack)
-- [Features](#features)
-- [Project Structure](#project-structure)
-- [Database Schema](#database-schema)
-- [Development Setup](#development-setup)
-- [API Documentation](#api-documentation)
-- [Future Improvements](#future-improvements)
+- Node.js with Express 5
+- MySQL with Sequelize models and raw SQL setup scripts
+- JWT authentication and role/permission authorization
+- Joi validation
+- Multer file uploads
+- Socket.IO realtime server
+- Swagger UI API documentation
 
----
-
-# Project Overview
-
-The **Community Student Progress Tracking System** is designed to help learning communities, training centers, or educational organizations manage student learning progress.
-
-Users can:
-
-- Register and login (Role-based access: Admin, Teacher, Student)
-- Manage students and classes/courses
-- Track attendance, assignments, submissions, and grades
-- Monitor learning progress and individual goals
-- View dynamic analytics dashboards and reports
-
----
-
-# System Architecture
+## Project Structure
 
 ```text
-Browser
-  │
-  ▼
-Next.js Frontend (TailwindCSS)
-  │
-  ▼
-Express.js REST API + Socket.io (Real-time updates)
-  │
-  ▼
-MySQL Database
+student-tracking-progress/
+  backend/
+    database/schema.sql          Raw MySQL schema used by migration script
+    src/app/                     Express app, routes, server, Socket.IO setup
+    src/config/                  Environment and database configuration
+    src/database/                Sequelize models, migrations, seeders
+    src/docs/swagger.js          Swagger/OpenAPI configuration
+    src/modules/                 Domain modules and route handlers
+    src/scripts/                 Database migrate, seed, and reset scripts
+    src/shared/                  Shared middleware, repositories, and utilities
+    uploads/                     Local uploaded files served by the API
+  frontend/
+    src/app/                     Next.js App Router pages and layouts
+    src/components/              Layout, dashboard, UI, and feature components
+    src/context/                 Auth context
+    src/hooks/                   Navigation and dashboard hooks
+    src/lib/                     Axios and Socket.IO clients
+    src/services/                API service wrappers
 ```
 
----
+## Main Features
 
-# Tech Stack
+- Authentication with JWT access/refresh tokens.
+- Role-based dashboards for admin, teacher, and student users.
+- Admin user management, teacher request review, system logs, analytics, classes, and assignments.
+- Teacher class management, student lists, materials, assignments, submissions, grading, messages, and notifications.
+- Student class enrollment, assignment submission, progress tracking, goals, messages, and notifications.
+- File uploads for avatars, materials, submissions, messages, and teacher verification documents.
+- Swagger documentation at `/api-docs`.
+- Realtime support through Socket.IO.
 
-## Frontend
-- Next.js (React Framework)
-- TailwindCSS (Styling)
-- Axios (HTTP Client)
+## Prerequisites
 
-## Backend
-- Node.js & Express.js
-- JWT Authentication (`jsonwebtoken`)
-- Password Hashing (`bcrypt`, `bcryptjs`)
-- Request Validation (`joi`)
-- File Uploads (`multer`)
-- Real-time Communication (`socket.io`)
-- Database Connection (`mysql2`, `sequelize`, `sequelize-cli`)
-- API Documentation (`swagger-jsdoc`, `swagger-ui-express`)
+- Node.js 20 or newer
+- npm
+- MySQL server
 
-## Database
-- MySQL (Relational Schema)
+## Environment Variables
 
----
+Create `backend/.env` before running backend scripts:
 
-# Features
+```env
+NODE_ENV=development
+PORT=5002
 
-## Authentication
-- User registration and login
-- JWT-based authentication
-- Role-based access control (Admin, Teacher, Student)
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_USER=root
+DB_PASSWORD=your_mysql_password
+DB_NAME=student_tracking
 
-## Class & User Management
-- Add, update, delete students and teachers
-- Create and manage classes
-- Assign students to specific classes
-
-## Progress & Assignment Tracking
-- Create assignments with due dates and maximum scores
-- Upload and manage student assignment submissions (via `multer`)
-- Grade submissions and provide feedback
-- Set and track individual student goals
-
-## Dashboard Analytics
-- Admin, Teacher, and Student specific dashboards
-- Real-time dynamic calculation of metrics (User Growth, Active Students, Global Submission Rate)
-- Activity logs tracking user actions
-
----
-
-# Project Structure
-
-```text
-student-progress-tracker
-│
-├── frontend
-│   ├── src
-│   │   ├── app (Next.js Pages & Layouts)
-│   │   ├── components (Reusable UI Components)
-│   │   ├── hooks (Custom React Hooks)
-│   │   ├── lib (Axios config, etc.)
-│   │   ├── services (API Service files: adminService.ts, assignmentService.ts, etc.)
-│   │   └── styles
-│   ├── package.json
-│   └── tailwind.config.ts
-│
-└── backend
-    ├── src
-    │   ├── app
-    │   │   ├── server.js (Express & Socket.io setup)
-    │   │   └── routes.js (Main router configuration)
-    │   ├── config
-    │   │   └── db.js (MySQL connection pool)
-    │   ├── modules (Domain-driven architecture)
-    │   │   ├── admin, assignments, auth, classes, dashboard, goals, logs, users, etc.
-    │   │   └── (Each module contains its own controller, service, repository, routes, and validation)
-    │   ├── shared
-    │   │   └── middleware (Auth, Error Handling, Validation)
-    │   ├── scripts
-    │   │   ├── migrate.js (Run database migrations)
-    │   │   ├── seed.js (Seed database with initial data)
-    │   │   └── reset.js (Reset database schema)
-    │   └── docs
-    │       └── swagger.js (OpenAPI configuration)
-    ├── database
-    │   └── schema.sql (Raw SQL schema definition)
-    ├── .env.example
-    └── package.json
+JWT_SECRET=replace_with_a_strong_secret
+JWT_ACCESS_SECRET=replace_with_a_strong_access_secret
+JWT_REFRESH_SECRET=replace_with_a_strong_refresh_secret
+JWT_ACCESS_EXPIRATION=1h
+JWT_REFRESH_EXPIRATION=7d
 ```
 
----
+Create `frontend/.env.local` if the backend is not running at the default URL:
 
-# Database Schema
+```env
+NEXT_PUBLIC_API_URL=http://127.0.0.1:5002/api
+```
 
-Key tables include:
-- `users`: Core user accounts (id, username, email, password_hash, role_id)
-- `roles`: RBAC roles (admin, teacher, student)
-- `user_profiles`: Extended user details (first_name, last_name, avatar_url)
-- `classes`: Classes created by teachers
-- `enrollments`: Mapping of students to classes
-- `assignments`: Assignments linked to specific classes
-- `submissions`: Student submissions for assignments
-- `grades`: Scores and feedback for submissions
-- `goals`: Individual student goals and targets
-- `activity_logs`: System audit trail
+The frontend defaults to `http://127.0.0.1:5002/api` or `http://localhost:5002/api` depending on the component.
 
----
+## Installation
 
-# Development Setup
-
-## 1. Database Setup
-Create a local MySQL database and configure your `.env` file in the backend.
-
-## 2. Backend Setup
-Navigate to the backend directory, install dependencies, set up the database, and start the server:
+Install backend dependencies:
 
 ```bash
 cd backend
 npm install
-
-# Configure your .env file before running database scripts
-cp .env.example .env
-
-# Initialize database schema
-npm run migrate
-
-# (Optional) Seed the database with demo users and roles
-npm run seed
-
-# Run the development server (uses nodemon)
-npm run dev
 ```
 
-*Useful Database Commands:*
-- `npm run db:reset`: Drops and recreates the database tables from scratch.
-
-## 3. Frontend Setup
-Navigate to the frontend directory, install dependencies, and start the Next.js server:
+Install frontend dependencies:
 
 ```bash
 cd frontend
 npm install
+```
+
+## Database Setup
+
+From the `backend` directory:
+
+```bash
+npm run migrate
+```
+
+The migration script connects to MySQL, drops the configured database if it exists, recreates it, applies `database/schema.sql`, seeds roles, permissions, and the admin user.
+
+Optional demo users can be added with:
+
+```bash
+npm run seed
+```
+
+To fully rebuild the database and seed demo users:
+
+```bash
+npm run db:reset
+```
+
+Seeded accounts:
+
+| Role | Email | Password |
+| --- | --- | --- |
+| Admin | `admin@example.com` | `admin123` |
+| Teacher | `teacher@example.com` | `teacher123` |
+| Student | `student@example.com` | `student123` |
+
+## Running Locally
+
+Start the backend API:
+
+```bash
+cd backend
 npm run dev
 ```
 
-Services will run on:
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:5002 (or as defined in `.env`)
+Start the frontend:
 
----
-
-# API Documentation
-
-The backend includes auto-generated Swagger OpenAPI documentation. Once the backend server is running, you can view the interactive API docs at:
-- **Swagger UI**: `http://localhost:5002/api-docs`
-
----
-
-# Environment Variables
-
-Create a `.env` file in the `backend` directory:
-
-```env
-# Server
-PORT=5002
-
-# Database Configuration
-DB_HOST=localhost
-DB_USER=root
-DB_PASSWORD=yourpassword
-DB_NAME=student_tracking_system
-
-# JWT Authentication
-JWT_SECRET=your_jwt_secret_key_here
+```bash
+cd frontend
+npm run dev
 ```
 
----
+Default local URLs:
 
-# Future Improvements
+- Frontend: `http://localhost:3000`
+- Backend API: `http://localhost:5002/api`
+- Backend health check: `http://localhost:5002`
+- Swagger UI: `http://localhost:5002/api-docs`
+- Uploaded files: `http://localhost:5002/uploads/...`
 
-- Data visualization charts (e.g. Recharts integration)
-- Export reports (PDF / Excel)
-- Redis caching for dashboard statistics
-- CI/CD pipeline
-- Production Docker deployment refinement
+## Useful Scripts
+
+### Backend
+
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start Express with nodemon |
+| `npm start` | Start Express with Node |
+| `npm run migrate` | Drop and recreate the database, apply schema, seed admin |
+| `npm run seed` | Add demo teacher and student users |
+| `npm run db:reset` | Run migration and demo seeding |
+
+### Frontend
+
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Start Next.js development server with Turbopack |
+| `npm run build` | Build the production frontend |
+| `npm start` | Start the production Next.js server |
+| `npm run lint` | Run ESLint |
+
+## API Route Groups
+
+All API route groups are mounted under `/api`:
+
+- `/auth` - register, login, refresh token
+- `/users` - current user, profile, academic record, teacher request
+- `/classes` - class CRUD, join requests, enrollments
+- `/materials` - class material uploads and management
+- `/assignments` - assignment CRUD and student assignment lists
+- `/submissions` - assignment submission upload and retrieval
+- `/grades` - grade creation and lookup
+- `/goals` - student learning goals
+- `/messages` - direct messages and announcements
+- `/notifications` - notification read/delete actions
+- `/dashboard` - role-specific dashboard data
+- `/students` - teacher/admin student views
+- `/admin` - admin users, teachers, classes, logs, dashboard, assignments, teacher requests
+- `/teacher-requests` - teacher verification request workflow
+
+Use Swagger UI at `http://localhost:5002/api-docs` for interactive endpoint documentation.
+
+## Database Tables
+
+The schema includes:
+
+- `users`, `roles`, `permissions`, `role_permissions`, `user_profiles`
+- `classes`, `enrollments`, `pending_enrollments`, `materials`
+- `assignments`, `submissions`, `grades`, `goals`
+- `messages`, `notifications`
+- `activity_logs`, `system_logs`, `refresh_tokens`
+- `teacher_requests`
+
+## Development Notes
+
+- Backend uploads are stored locally in `backend/uploads`.
+- The migration command is destructive because it drops the configured database before recreating it.
+- The backend package currently has no automated test suite configured; `npm test` is a placeholder that exits with an error.
+- The frontend middleware protects `/student`, `/teacher`, and `/admin` routes by checking auth cookies and role.
