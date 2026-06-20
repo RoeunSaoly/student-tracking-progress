@@ -77,6 +77,7 @@ CREATE TABLE classes (
     code VARCHAR(20) UNIQUE NOT NULL,
     description TEXT,
     is_active BOOLEAN DEFAULT TRUE,
+    cover_image VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (teacher_id) REFERENCES users(id) ON DELETE CASCADE
@@ -136,8 +137,10 @@ CREATE TABLE assignments (
     class_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
     description TEXT,
+    available_from DATETIME NULL,
     due_date DATETIME,
     max_score INT DEFAULT 100,
+    submission_type VARCHAR(20) DEFAULT 'file',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (class_id) REFERENCES classes(id) ON DELETE CASCADE
@@ -151,6 +154,7 @@ CREATE TABLE submissions (
     assignment_id INT NOT NULL,
     student_id INT NOT NULL,
     file_path VARCHAR(500),
+    content TEXT,
     status ENUM('submitted','late','pending','graded') DEFAULT 'pending',
     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
